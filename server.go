@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"instagram-go/authentications"
-	"instagram-go/comments"
-	"instagram-go/likes"
+	"instagram-go/handlers"
 	"instagram-go/middlewares"
-	"instagram-go/posts"
-	"instagram-go/users"
+	"instagram-go/services"
+
 	"net/http"
 	"strings"
 
@@ -29,20 +27,20 @@ func main() {
 	likesCollection := client.Database("instagram").Collection("likes")
 	commentsCollection := client.Database("instagram").Collection("comments")
 
-	userService := users.NewUserService(usersCollection)
-	userHandlers := users.NewUserHandlers(*userService)
+	userService := services.NewUserService(usersCollection)
+	userHandlers := handlers.NewUserHandlers(*userService)
 
-	authenticationService := authentications.NewAuthenticationService(usersCollection)
-	authenticationHandlers := authentications.NewAuthenticationHandler(*authenticationService)
+	authenticationService := services.NewAuthenticationService(usersCollection)
+	authenticationHandlers := handlers.NewAuthenticationHandler(*authenticationService)
 
-	postService := posts.NewPostService(postsCollection, likesCollection)
-	postHandlers := posts.NewPostHandlers(*postService)
+	postService := services.NewPostService(postsCollection, likesCollection)
+	postHandlers := handlers.NewPostHandlers(*postService)
 
-	likeService := likes.NewLikeService(likesCollection)
-	likeHandlers := likes.NewLikeHandlers(*likeService)
+	likeService := services.NewLikeService(likesCollection)
+	likeHandlers := handlers.NewLikeHandlers(*likeService)
 
-	commentService := comments.NewCommentService(commentsCollection, likesCollection)
-	commentHandlers := comments.NewCommentHandlers(*commentService)
+	commentService := services.NewCommentService(commentsCollection, likesCollection)
+	commentHandlers := handlers.NewCommentHandlers(*commentService)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", userHandlers.PostUserHandler)

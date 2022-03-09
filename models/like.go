@@ -1,4 +1,4 @@
-package likes
+package models
 
 type Like struct {
 	Id           string `json:"id" bson:"_id"`

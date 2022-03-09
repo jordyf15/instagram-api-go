@@ -1,8 +1,9 @@
-package posts
+package services
 
 import (
 	"context"
 	"fmt"
+	"instagram-go/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,7 +22,7 @@ func NewPostService(postCollection *mongo.Collection, likeCollection *mongo.Coll
 	}
 }
 
-func (ps *PostService) insertPost(post Post) error {
+func (ps *PostService) InsertPost(post models.Post) error {
 	newPost := bson.D{
 		primitive.E{Key: "_id", Value: post.Id},
 		primitive.E{Key: "user_id", Value: post.UserId},
@@ -38,7 +39,7 @@ func (ps *PostService) insertPost(post Post) error {
 	return nil
 }
 
-func (ps *PostService) findAllPost() ([]Post, error) {
+func (ps *PostService) FindAllPost() ([]models.Post, error) {
 	cursor, err := ps.postCollection.Find(context.TODO(), bson.M{})
 
 	if err != nil {
@@ -48,7 +49,7 @@ func (ps *PostService) findAllPost() ([]Post, error) {
 	if err = cursor.All(context.TODO(), &queryResult); err != nil {
 		return nil, err
 	}
-	var posts []Post
+	var posts []models.Post
 	for _, v := range queryResult {
 		id := fmt.Sprintf("%v", v["_id"])
 		userId := fmt.Sprintf("%v", v["user_id"])
@@ -69,7 +70,7 @@ func (ps *PostService) findAllPost() ([]Post, error) {
 		if err != nil {
 			return nil, err
 		}
-		post := Post{id, userId, visualMediaUrls, caption, likeCount, createdDate, updatedDate}
+		post := models.Post{id, userId, visualMediaUrls, caption, likeCount, createdDate, updatedDate}
 		posts = append(posts, post)
 	}
 	return posts, nil
@@ -88,7 +89,7 @@ func (ps *PostService) getPostLikeCount(postId string) (int, error) {
 	return len(likes), nil
 }
 
-func (ps *PostService) updatePost(updatedPostId string, newCaption string) error {
+func (ps *PostService) UpdatePost(updatedPostId string, newCaption string) error {
 	filter := bson.M{"_id": updatedPostId}
 	update := bson.D{primitive.E{
 		Key: "$set",
@@ -106,8 +107,8 @@ func (ps *PostService) updatePost(updatedPostId string, newCaption string) error
 	return nil
 }
 
-func (ps *PostService) findPost(postId string) (string, error) {
-	var post Post
+func (ps *PostService) FindPost(postId string) (string, error) {
+	var post models.Post
 	filter := bson.M{"_id": postId}
 	err := ps.postCollection.FindOne(context.TODO(), filter).Decode(&post)
 	if err != nil {
@@ -116,7 +117,7 @@ func (ps *PostService) findPost(postId string) (string, error) {
 	return post.UserId, nil
 }
 
-func (ps *PostService) deletePost(postId string) error {
+func (ps *PostService) DeletePost(postId string) error {
 	filter := bson.M{"_id": postId}
 	_, err := ps.postCollection.DeleteOne(context.TODO(), filter)
 	if err != nil {

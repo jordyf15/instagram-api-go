@@ -1,8 +1,9 @@
-package comments
+package services
 
 import (
 	"context"
 	"fmt"
+	"instagram-go/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,8 +22,8 @@ func NewCommentService(commentCollection *mongo.Collection, likeCollection *mong
 	}
 }
 
-func (cs *CommentService) getCommentUserId(commentId string) (string, error) {
-	var comment Comment
+func (cs *CommentService) GetCommentUserId(commentId string) (string, error) {
+	var comment models.Comment
 	filter := bson.M{"_id": commentId}
 	err := cs.commentCollection.FindOne(context.TODO(), filter).Decode(&comment)
 	if err != nil {
@@ -44,7 +45,7 @@ func (cs *CommentService) getCommentLikeCount(commentId string) (int, error) {
 	return len(likes), nil
 }
 
-func (cs *CommentService) findAllPostComment(postId string) ([]Comment, error) {
+func (cs *CommentService) FindAllPostComment(postId string) ([]models.Comment, error) {
 	filter := bson.M{"post_id": postId}
 	cursor, err := cs.commentCollection.Find(context.TODO(), filter)
 	if err != nil {
@@ -54,7 +55,7 @@ func (cs *CommentService) findAllPostComment(postId string) ([]Comment, error) {
 	if err = cursor.All(context.TODO(), &queryResult); err != nil {
 		return nil, err
 	}
-	var comments []Comment
+	var comments []models.Comment
 	for _, v := range queryResult {
 		id := fmt.Sprintf("%v", v["_id"])
 		postId := fmt.Sprintf("%v", v["post_id"])
@@ -66,13 +67,13 @@ func (cs *CommentService) findAllPostComment(postId string) ([]Comment, error) {
 		if err != nil {
 			return nil, err
 		}
-		comment := Comment{id, postId, userId, commentContent, likeCount, createdDate, updatedDate}
+		comment := models.Comment{id, postId, userId, commentContent, likeCount, createdDate, updatedDate}
 		comments = append(comments, comment)
 	}
 	return comments, nil
 }
 
-func (cs *CommentService) insertComment(comment Comment) error {
+func (cs *CommentService) InsertComment(comment models.Comment) error {
 	newComment := bson.D{
 		primitive.E{Key: "_id", Value: comment.Id},
 		primitive.E{Key: "post_id", Value: comment.PostId},
@@ -89,7 +90,7 @@ func (cs *CommentService) insertComment(comment Comment) error {
 	return nil
 }
 
-func (cs *CommentService) updateComment(updatedCommentId string, newComment string) error {
+func (cs *CommentService) UpdateComment(updatedCommentId string, newComment string) error {
 	filter := bson.M{"_id": updatedCommentId}
 	update := bson.D{primitive.E{
 		Key: "$set",
@@ -105,7 +106,7 @@ func (cs *CommentService) updateComment(updatedCommentId string, newComment stri
 	return nil
 }
 
-func (cs *CommentService) deleteComment(deletedCommentId string) error {
+func (cs *CommentService) DeleteComment(deletedCommentId string) error {
 	filter := bson.M{"_id": deletedCommentId}
 	_, err := cs.commentCollection.DeleteOne(context.TODO(), filter)
 	if err != nil {

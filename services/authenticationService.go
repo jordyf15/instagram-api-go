@@ -1,4 +1,4 @@
-package authentications
+package services
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func NewAuthenticationService(collection *mongo.Collection) *AuthenticationServi
 	}
 }
 
-func (as *AuthenticationService) verifyCredential(username string, password string) (string, error) {
+func (as *AuthenticationService) VerifyCredential(username string, password string) (string, error) {
 	var user user
 	filter := bson.M{"username": username}
 	err := as.collection.FindOne(context.TODO(), filter).Decode(&user)

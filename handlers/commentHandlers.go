@@ -1,14 +1,12 @@
-package posts
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	"instagram-go/models"
+	"instagram-go/services"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -17,40 +15,62 @@ import (
 	"github.com/google/uuid"
 )
 
-type PostHandlers struct {
+type CommentHandlers struct {
+	service services.CommentService
 	sync.Mutex
-	service PostService
 }
 
-func NewPostHandlers(service PostService) *PostHandlers {
-	return &PostHandlers{
+func NewCommentHandlers(service services.CommentService) *CommentHandlers {
+	return &CommentHandlers{
 		service: service,
 	}
 }
 
-func (ph *PostHandlers) Posts(w http.ResponseWriter, r *http.Request) {
+func (ch *CommentHandlers) Comments(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "POST":
-		ph.postPostHandler(w, r)
-		return
 	case "GET":
-		ph.getPostsHandler(w, r)
+		ch.getComments(w, r)
+		return
+	case "POST":
+		ch.postComment(w, r)
 		return
 	}
 }
 
-func (ph *PostHandlers) Post(w http.ResponseWriter, r *http.Request) {
+func (ch *CommentHandlers) Comment(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
-		ph.putPostHandler(w, r)
+		ch.putComment(w, r)
 		return
 	case "DELETE":
-		ph.deletePostHandler(w, r)
+		ch.deleteComment(w, r)
 		return
 	}
 }
 
-func (ph *PostHandlers) postPostHandler(w http.ResponseWriter, r *http.Request) {
+func (ch *CommentHandlers) getComments(w http.ResponseWriter, r *http.Request) {
+	urlParts := strings.Split(r.URL.String(), "/")
+	postId := urlParts[2]
+
+	ch.Lock()
+	comments, err := ch.service.FindAllPostComment(postId)
+	defer ch.Unlock()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	response := models.DataResponseComments{models.DataComments{comments}}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseBytes)
+}
+func (ch *CommentHandlers) postComment(w http.ResponseWriter, r *http.Request) {
 	tokenString := r.Header.Get("Authorization")
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		return []byte("secret"), nil
@@ -63,91 +83,58 @@ func (ph *PostHandlers) postPostHandler(w http.ResponseWriter, r *http.Request) 
 	claims := token.Claims.(jwt.MapClaims)
 	userIdToken := claims["user_id"]
 	userId := fmt.Sprintf("%v", userIdToken)
-	newPostId := "post-" + uuid.NewString()
-	r.ParseMultipartForm(10 << 20)
-	formData := r.MultipartForm
-	visualMedias := formData.File["visual_medias"]
-	var visualMediaUrls []string
-	newpath := filepath.Join(".", "visual_medias")
-	err = os.MkdirAll(newpath, os.ModePerm)
+	newCommentId := "comment-" + uuid.NewString()
+
+	urlParts := strings.Split(r.URL.String(), "/")
+	postId := urlParts[2]
+
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	for k := range visualMedias {
-		visualMedia, err := visualMedias[k].Open()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		defer visualMedia.Close()
-		fileNameParts := strings.Split(visualMedias[k].Filename, ".")
-		extension := fileNameParts[len(fileNameParts)-1]
-		visualMediaUrl := "./visual_medias/" + newPostId + "-" + strconv.Itoa(k) + "." + extension
-		out, err := os.Create(visualMediaUrl)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		defer out.Close()
-
-		_, err = io.Copy(out, visualMedia)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		visualMediaUrls = append(visualMediaUrls, visualMediaUrl)
+	ct := r.Header.Get("content-type")
+	if ct != r.Header.Get("content-type") {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		w.Write([]byte(fmt.Sprintf("need content-type 'application/json', but got '%s'", ct)))
+		return
 	}
-	caption := r.FormValue("caption")
-	createdTime := time.Now()
-	newPost := Post{newPostId, userId, visualMediaUrls, caption, 0, createdTime, createdTime}
 
-	ph.Lock()
-	err = ph.service.insertPost(newPost)
-	defer ph.Unlock()
-
+	var comment models.Comment
+	err = json.Unmarshal(bodyBytes, &comment)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
-	} else {
-		response := message{"Post successfully Created"}
-		responseBytes, err := json.Marshal(response)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusCreated)
-		w.Write(responseBytes)
 	}
-}
+	comment.Id = newCommentId
+	comment.PostId = postId
+	comment.UserId = userId
+	comment.CreatedDate = time.Now()
+	comment.UpdatedDate = comment.CreatedDate
 
-func (ph *PostHandlers) getPostsHandler(w http.ResponseWriter, r *http.Request) {
-	ph.Lock()
-	posts, err := ph.service.findAllPost()
-	defer ph.Unlock()
+	ch.Lock()
+	err = ch.service.InsertComment(comment)
+	defer ch.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	response := dataResponse{data{posts}}
+	response := models.Message{"Comment successfully Created"}
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(responseBytes)
 }
 
-func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
+func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -163,8 +150,8 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post Post
-	err = json.Unmarshal(bodyBytes, &post)
+	var comment models.Comment
+	err = json.Unmarshal(bodyBytes, &comment)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -172,65 +159,8 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	urlParts := strings.Split(r.URL.String(), "/")
-	postId := urlParts[2]
-	tokenString := r.Header.Get("Authorization")
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	claims := token.Claims.(jwt.MapClaims)
-	userIdToken := claims["user_id"]
-	userId := fmt.Sprintf("%v", userIdToken)
-	ph.Lock()
-	postUserId, err := ph.service.findPost(postId)
-	ph.Unlock()
+	commentId := urlParts[4]
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	if postUserId != userId {
-		response := message{"You are not authorized to update this post"}
-		responseBytes, err := json.Marshal(response)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(responseBytes)
-		return
-	}
-	ph.Lock()
-	err = ph.service.updatePost(postId, post.Caption)
-	defer ph.Unlock()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-
-	response := message{"Post successfully Updated"}
-	responseBytes, err := json.Marshal(response)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseBytes)
-
-}
-
-func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request) {
-	urlParts := strings.Split(r.URL.String(), "/")
-	postId := urlParts[2]
 	tokenString := r.Header.Get("Authorization")
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		return []byte("secret"), nil
@@ -244,9 +174,66 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 	userIdToken := claims["user_id"]
 	userId := fmt.Sprintf("%v", userIdToken)
 
-	ph.Lock()
-	postUserId, err := ph.service.findPost(postId)
-	ph.Unlock()
+	ch.Lock()
+	commentUserId, err := ch.service.GetCommentUserId(commentId)
+	ch.Unlock()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	if commentUserId != userId {
+		response := models.Message{"You are not authorized to update this comment"}
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(responseBytes)
+		return
+	}
+	ch.Lock()
+	err = ch.service.UpdateComment(commentId, comment.Comment)
+	defer ch.Unlock()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	response := models.Message{"Comment successfully Updated"}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseBytes)
+}
+
+func (ch *CommentHandlers) deleteComment(w http.ResponseWriter, r *http.Request) {
+	urlParts := strings.Split(r.URL.String(), "/")
+	commentId := urlParts[4]
+	tokenString := r.Header.Get("Authorization")
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	userIdToken := claims["user_id"]
+	userId := fmt.Sprintf("%v", userIdToken)
+
+	ch.Lock()
+	commentUserId, err := ch.service.GetCommentUserId(commentId)
+	ch.Unlock()
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -254,8 +241,8 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if postUserId != userId {
-		response := message{"You are not authorized to delete this post"}
+	if commentUserId != userId {
+		response := models.Message{"You are not authorized to delete this comment"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -267,16 +254,15 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ph.Lock()
-	err = ph.service.deletePost(postId)
-	defer ph.Unlock()
+	ch.Lock()
+	err = ch.service.DeleteComment(commentId)
+	defer ch.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
-
-	response := message{"Post successfully Deleted"}
+	response := models.Message{"Comment successfully Deleted"}
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -285,15 +271,4 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(responseBytes)
-}
-
-type message struct {
-	Message string `json:"message"`
-}
-
-type dataResponse struct {
-	Data data `json:"data"`
-}
-type data struct {
-	Posts []Post `json:"posts"`
 }

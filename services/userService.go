@@ -1,7 +1,8 @@
-package users
+package services
 
 import (
 	"context"
+	"instagram-go/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,7 +20,7 @@ func NewUserService(collection *mongo.Collection) *UserService {
 	}
 }
 
-func (us *UserService) insertUser(user User) error {
+func (us *UserService) InsertUser(user models.User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
 		return err
@@ -43,8 +44,8 @@ func (us *UserService) insertUser(user User) error {
 	return nil
 }
 
-func (us *UserService) updateUser(newUserData User) error {
-	var willBeUpdatedUser User
+func (us *UserService) UpdateUser(newUserData models.User) error {
+	var willBeUpdatedUser models.User
 	filter := bson.M{"_id": newUserData.Id}
 	err := us.collection.FindOne(context.TODO(), filter).Decode(&willBeUpdatedUser)
 	if err != nil {

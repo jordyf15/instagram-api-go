@@ -1,7 +1,8 @@
-package likes
+package services
 
 import (
 	"context"
+	"instagram-go/models"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,7 +18,7 @@ func NewLikeService(collection *mongo.Collection) *LikeService {
 	return &LikeService{collection: collection}
 }
 
-func (ls *LikeService) insertLike(like Like) error {
+func (ls *LikeService) InsertLike(like models.Like) error {
 	newLike := bson.D{
 		primitive.E{Key: "_id", Value: like.Id},
 		primitive.E{Key: "user_id", Value: like.UserId},
@@ -31,7 +32,7 @@ func (ls *LikeService) insertLike(like Like) error {
 	return nil
 }
 
-func (ls *LikeService) deleteLike(likeId string) error {
+func (ls *LikeService) DeleteLike(likeId string) error {
 	filter := bson.M{"_id": likeId}
 	_, err := ls.collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
@@ -40,7 +41,7 @@ func (ls *LikeService) deleteLike(likeId string) error {
 	return nil
 }
 
-func (ls *LikeService) isLikeExist(userId string, resourceId string, resourceType string) (bool, error) {
+func (ls *LikeService) IsLikeExist(userId string, resourceId string, resourceType string) (bool, error) {
 	filter := bson.M{"resource_id": resourceId, "user_id": userId, "resource_type": resourceType}
 	cursor, err := ls.collection.Find(context.TODO(), filter, options.Find().SetLimit(1))
 	if err != nil {
@@ -57,8 +58,8 @@ func (ls *LikeService) isLikeExist(userId string, resourceId string, resourceTyp
 	}
 }
 
-func (ls *LikeService) getLikeUserId(likeId string) (string, error) {
-	var like Like
+func (ls *LikeService) GetLikeUserId(likeId string) (string, error) {
+	var like models.Like
 	filter := bson.M{"_id": likeId}
 	err := ls.collection.FindOne(context.TODO(), filter).Decode(&like)
 	if err != nil {

@@ -1,8 +1,9 @@
-package authentications
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
+	"instagram-go/services"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -13,10 +14,10 @@ import (
 
 type AuthenticationHandlers struct {
 	sync.Mutex
-	service AuthenticationService
+	service services.AuthenticationService
 }
 
-func NewAuthenticationHandler(service AuthenticationService) *AuthenticationHandlers {
+func NewAuthenticationHandler(service services.AuthenticationService) *AuthenticationHandlers {
 	return &AuthenticationHandlers{
 		service: service,
 	}
@@ -46,7 +47,7 @@ func (ah *AuthenticationHandlers) PostAuthenticationHandler(w http.ResponseWrite
 	}
 
 	ah.Lock()
-	userId, err := ah.service.verifyCredential(credential.Username, credential.Password)
+	userId, err := ah.service.VerifyCredential(credential.Username, credential.Password)
 	defer ah.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)

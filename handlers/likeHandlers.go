@@ -1,8 +1,10 @@
-package likes
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
+	"instagram-go/models"
+	"instagram-go/services"
 	"net/http"
 	"strings"
 	"sync"
@@ -12,11 +14,11 @@ import (
 )
 
 type LikeHandlers struct {
-	service LikeService
+	service services.LikeService
 	sync.Mutex
 }
 
-func NewLikeHandlers(service LikeService) *LikeHandlers {
+func NewLikeHandlers(service services.LikeService) *LikeHandlers {
 	return &LikeHandlers{
 		service: service,
 	}
@@ -39,7 +41,7 @@ func (lh *LikeHandlers) PostPostLikeHandler(w http.ResponseWriter, r *http.Reque
 	userId := fmt.Sprintf("%v", userIdToken)
 
 	lh.Lock()
-	exist, err := lh.service.isLikeExist(userId, postId, "post")
+	exist, err := lh.service.IsLikeExist(userId, postId, "post")
 	lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -47,7 +49,7 @@ func (lh *LikeHandlers) PostPostLikeHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if exist {
-		response := message{"User have already liked this post"}
+		response := models.Message{"User have already liked this post"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -60,9 +62,9 @@ func (lh *LikeHandlers) PostPostLikeHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	likeId := "like-" + uuid.NewString()
-	newLike := Like{likeId, userId, postId, "post"}
+	newLike := models.Like{likeId, userId, postId, "post"}
 	lh.Lock()
-	err = lh.service.insertLike(newLike)
+	err = lh.service.InsertLike(newLike)
 	defer lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -89,7 +91,7 @@ func (lh *LikeHandlers) DeletePostLikeHandler(w http.ResponseWriter, r *http.Req
 	userId := fmt.Sprintf("%v", userIdToken)
 
 	lh.Lock()
-	likeUserId, err := lh.service.getLikeUserId(likeId)
+	likeUserId, err := lh.service.GetLikeUserId(likeId)
 	lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -97,7 +99,7 @@ func (lh *LikeHandlers) DeletePostLikeHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if likeUserId != userId {
-		response := message{"You are not authorized"}
+		response := models.Message{"You are not authorized"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -109,7 +111,7 @@ func (lh *LikeHandlers) DeletePostLikeHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 	lh.Lock()
-	err = lh.service.deleteLike(likeId)
+	err = lh.service.DeleteLike(likeId)
 	defer lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -136,7 +138,7 @@ func (lh *LikeHandlers) PostCommentLikeHandler(w http.ResponseWriter, r *http.Re
 	userId := fmt.Sprintf("%v", userIdToken)
 
 	lh.Lock()
-	exist, err := lh.service.isLikeExist(userId, commentId, "comment")
+	exist, err := lh.service.IsLikeExist(userId, commentId, "comment")
 	lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -144,7 +146,7 @@ func (lh *LikeHandlers) PostCommentLikeHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if exist {
-		response := message{"User have already liked this comment"}
+		response := models.Message{"User have already liked this comment"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -157,9 +159,9 @@ func (lh *LikeHandlers) PostCommentLikeHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	likeId := "like-" + uuid.NewString()
-	newLike := Like{likeId, userId, commentId, "comment"}
+	newLike := models.Like{likeId, userId, commentId, "comment"}
 	lh.Lock()
-	err = lh.service.insertLike(newLike)
+	err = lh.service.InsertLike(newLike)
 	defer lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -186,7 +188,7 @@ func (lh *LikeHandlers) DeleteCommentLikeHandler(w http.ResponseWriter, r *http.
 	userId := fmt.Sprintf("%v", userIdToken)
 
 	lh.Lock()
-	likeUserId, err := lh.service.getLikeUserId(likeId)
+	likeUserId, err := lh.service.GetLikeUserId(likeId)
 	lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -194,7 +196,7 @@ func (lh *LikeHandlers) DeleteCommentLikeHandler(w http.ResponseWriter, r *http.
 		return
 	}
 	if likeUserId != userId {
-		response := message{"You are not authorized"}
+		response := models.Message{"You are not authorized"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -206,7 +208,7 @@ func (lh *LikeHandlers) DeleteCommentLikeHandler(w http.ResponseWriter, r *http.
 		return
 	}
 	lh.Lock()
-	err = lh.service.deleteLike(likeId)
+	err = lh.service.DeleteLike(likeId)
 	defer lh.Unlock()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -214,8 +216,4 @@ func (lh *LikeHandlers) DeleteCommentLikeHandler(w http.ResponseWriter, r *http.
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-}
-
-type message struct {
-	Message string `json:"message"`
 }

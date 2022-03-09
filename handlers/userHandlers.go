@@ -1,10 +1,12 @@
-package users
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
 	"image"
 	"image/jpeg"
+	"instagram-go/models"
+	"instagram-go/services"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -19,10 +21,10 @@ import (
 
 type UserHandlers struct {
 	sync.Mutex
-	service UserService
+	service services.UserService
 }
 
-func NewUserHandlers(service UserService) *UserHandlers {
+func NewUserHandlers(service services.UserService) *UserHandlers {
 	return &UserHandlers{
 		service: service,
 	}
@@ -43,7 +45,7 @@ func (uh *UserHandlers) PostUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var user User
+	var user models.User
 	err = json.Unmarshal(bodyBytes, &user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -52,7 +54,7 @@ func (uh *UserHandlers) PostUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	user.Id = "user-" + uuid.NewString()
 	uh.Lock()
-	err = uh.service.insertUser(user)
+	err = uh.service.InsertUser(user)
 	defer uh.Unlock()
 
 	if err != nil {
@@ -60,7 +62,7 @@ func (uh *UserHandlers) PostUserHandler(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(err.Error()))
 		return
 	} else {
-		response := message{"User successfully registered"}
+		response := models.Message{"User successfully registered"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -90,7 +92,7 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 	claims := token.Claims.(jwt.MapClaims)
 	userIdToken := claims["user_id"]
 	if userIdParam != userIdToken {
-		response := message{"Not authorized"}
+		response := models.Message{"Not authorized"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -99,6 +101,7 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write(responseBytes)
+		return
 	}
 
 	r.ParseMultipartForm(10 << 20)
@@ -108,7 +111,7 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	email := r.FormValue("email")
 
-	var updatedUser User
+	var updatedUser models.User
 	newpath := filepath.Join(".", "profile_pictures")
 	err = os.MkdirAll(newpath, os.ModePerm)
 	if err != nil {
@@ -144,21 +147,21 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		smallProfilePicture := ProfilePicture{"small", "150 x 150 px", smallProfilePictureUrl}
-		averageProfilePicture := ProfilePicture{"average", "400 x 400 px", averageProfilePictureUrl}
-		largeProfilePicture := ProfilePicture{"large", "800 x 800 px", largeProfilePictureUrl}
+		smallProfilePicture := models.ProfilePicture{"small", "150 x 150 px", smallProfilePictureUrl}
+		averageProfilePicture := models.ProfilePicture{"average", "400 x 400 px", averageProfilePictureUrl}
+		largeProfilePicture := models.ProfilePicture{"large", "800 x 800 px", largeProfilePictureUrl}
 
-		updatedUser = User{
+		updatedUser = models.User{
 			userIdParam, username, fullName, password,
-			email, []ProfilePicture{smallProfilePicture, averageProfilePicture, largeProfilePicture},
+			email, []models.ProfilePicture{smallProfilePicture, averageProfilePicture, largeProfilePicture},
 		}
 	} else {
-		updatedUser = User{
+		updatedUser = models.User{
 			userIdParam, username, fullName, password, email, nil,
 		}
 	}
 	uh.Lock()
-	err = uh.service.updateUser(updatedUser)
+	err = uh.service.UpdateUser(updatedUser)
 	defer uh.Unlock()
 
 	if err != nil {
@@ -166,7 +169,7 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	} else {
-		response := message{"User successfully Updated"}
+		response := models.Message{"User successfully Updated"}
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -196,8 +199,4 @@ func saveFileToLocale(size string, originalProfilePicture image.Image, userId st
 	jpeg.Encode(resizedProfilePictureFile, resizedProfilePicture, nil)
 	resizedProfilePictureFile.Close()
 	return resizedProfilePictureUrl, nil
-}
-
-type message struct {
-	Message string `json:"message"`
 }
