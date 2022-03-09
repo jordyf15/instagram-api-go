@@ -67,8 +67,8 @@ func (cs *CommentService) FindAllPostComment(postId string) ([]models.Comment, e
 		if err != nil {
 			return nil, err
 		}
-		comment := models.Comment{id, postId, userId, commentContent, likeCount, createdDate, updatedDate}
-		comments = append(comments, comment)
+		comment := models.NewComment(id, postId, userId, commentContent, likeCount, createdDate, updatedDate)
+		comments = append(comments, *comment)
 	}
 	return comments, nil
 }

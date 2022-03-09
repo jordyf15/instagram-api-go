@@ -11,3 +11,15 @@ type Post struct {
 	CreatedDate     time.Time `json:"created_date" bson:"created_date"`
 	UpdatedDate     time.Time `json:"updated_date" bson:"updated_date"`
 }
+
+func NewPost(id string, userId string, visualMediaUrls []string, caption string, likeCount int, createdDate time.Time, updatedDate time.Time) *Post {
+	return &Post{
+		Id:              id,
+		UserId:          userId,
+		VisualMediaUrls: visualMediaUrls,
+		Caption:         caption,
+		LikeCount:       likeCount,
+		CreatedDate:     createdDate,
+		UpdatedDate:     updatedDate,
+	}
+}

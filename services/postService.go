@@ -70,8 +70,8 @@ func (ps *PostService) FindAllPost() ([]models.Post, error) {
 		if err != nil {
 			return nil, err
 		}
-		post := models.Post{id, userId, visualMediaUrls, caption, likeCount, createdDate, updatedDate}
-		posts = append(posts, post)
+		post := models.NewPost(id, userId, visualMediaUrls, caption, likeCount, createdDate, updatedDate)
+		posts = append(posts, *post)
 	}
 	return posts, nil
 }

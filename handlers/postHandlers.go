@@ -106,7 +106,7 @@ func (ph *PostHandlers) postPostHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	caption := r.FormValue("caption")
 	createdTime := time.Now()
-	newPost := models.Post{newPostId, userId, visualMediaUrls, caption, 0, createdTime, createdTime}
+	newPost := *models.NewPost(newPostId, userId, visualMediaUrls, caption, 0, createdTime, createdTime)
 
 	ph.Lock()
 	err = ph.service.InsertPost(newPost)
@@ -117,7 +117,7 @@ func (ph *PostHandlers) postPostHandler(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(err.Error()))
 		return
 	} else {
-		response := models.Message{"Post successfully Created"}
+		response := *models.NewMessage("Post successfully Created")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -138,7 +138,8 @@ func (ph *PostHandlers) getPostsHandler(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(err.Error()))
 		return
 	}
-	response := models.DataResponsePosts{models.DataPosts{posts}}
+	dataPosts := *models.NewDataPosts(posts)
+	response := *models.NewDataResponsePosts(dataPosts)
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -198,7 +199,8 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if postUserId != userId {
-		response := models.Message{"You are not authorized to update this post"}
+		// response := models.Message{"You are not authorized to update this post"}
+		response := *models.NewMessage("You are not authorized to update this post")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -218,7 +220,8 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := models.Message{"Post successfully Updated"}
+	// response := models.Message{"Post successfully Updated"}
+	response := *models.NewMessage("Post successfully Updated")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -257,7 +260,8 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if postUserId != userId {
-		response := models.Message{"You are not authorized to delete this post"}
+		// response := models.Message{}
+		response := *models.NewMessage("You are not authorized to delete this post")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -278,7 +282,8 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response := models.Message{"Post successfully Deleted"}
+	// response := models.Message{"Post successfully Deleted"}
+	response := models.NewMessage("Post successfully Deleted")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

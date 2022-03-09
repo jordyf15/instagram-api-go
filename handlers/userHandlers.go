@@ -62,7 +62,7 @@ func (uh *UserHandlers) PostUserHandler(w http.ResponseWriter, r *http.Request) 
 		w.Write([]byte(err.Error()))
 		return
 	} else {
-		response := models.Message{"User successfully registered"}
+		response := models.NewMessage("User successfully registered")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -92,7 +92,7 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 	claims := token.Claims.(jwt.MapClaims)
 	userIdToken := claims["user_id"]
 	if userIdParam != userIdToken {
-		response := models.Message{"Not authorized"}
+		response := models.NewMessage("Not authorized")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -106,6 +106,11 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseMultipartForm(10 << 20)
 	profilePictureFile, _, err := r.FormFile("profile_picture")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	username := r.FormValue("username")
 	fullName := r.FormValue("full_name")
 	password := r.FormValue("password")
@@ -147,18 +152,14 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		smallProfilePicture := models.ProfilePicture{"small", "150 x 150 px", smallProfilePictureUrl}
-		averageProfilePicture := models.ProfilePicture{"average", "400 x 400 px", averageProfilePictureUrl}
-		largeProfilePicture := models.ProfilePicture{"large", "800 x 800 px", largeProfilePictureUrl}
+		smallProfilePicture := models.NewProfilePicture("small", "150 x 150 px", smallProfilePictureUrl)
+		averageProfilePicture := models.NewProfilePicture("average", "400 x 400 px", averageProfilePictureUrl)
+		largeProfilePicture := models.NewProfilePicture("large", "800 x 800 px", largeProfilePictureUrl)
 
-		updatedUser = models.User{
-			userIdParam, username, fullName, password,
-			email, []models.ProfilePicture{smallProfilePicture, averageProfilePicture, largeProfilePicture},
-		}
+		updatedUser = *models.NewUser(userIdParam, username, fullName, password,
+			email, []models.ProfilePicture{*smallProfilePicture, *averageProfilePicture, *largeProfilePicture})
 	} else {
-		updatedUser = models.User{
-			userIdParam, username, fullName, password, email, nil,
-		}
+		updatedUser = *models.NewUser(userIdParam, username, fullName, password, email, nil)
 	}
 	uh.Lock()
 	err = uh.service.UpdateUser(updatedUser)
@@ -169,7 +170,7 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	} else {
-		response := models.Message{"User successfully Updated"}
+		response := *models.NewMessage("User successfully Updated")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

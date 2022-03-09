@@ -60,7 +60,9 @@ func (ch *CommentHandlers) getComments(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	response := models.DataResponseComments{models.DataComments{comments}}
+	// response := models.DataResponseComments{models.DataComments{comments}}
+	dataComments := *models.NewDataComments(comments)
+	response := *models.NewDataResponseComments(dataComments)
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -123,7 +125,8 @@ func (ch *CommentHandlers) postComment(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-	response := models.Message{"Comment successfully Created"}
+	// response := models.Message{"Comment successfully Created"}
+	response := *models.NewMessage("Comment successfully Created")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -184,7 +187,8 @@ func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if commentUserId != userId {
-		response := models.Message{"You are not authorized to update this comment"}
+		// response := models.Message{"You are not authorized to update this comment"}
+		response := *models.NewMessage("You are not authorized to update this comment")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -204,7 +208,8 @@ func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := models.Message{"Comment successfully Updated"}
+	// response := models.Message{"Comment successfully Updated"}
+	response := *models.NewMessage("Comment successfully Updated")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -242,7 +247,8 @@ func (ch *CommentHandlers) deleteComment(w http.ResponseWriter, r *http.Request)
 	}
 
 	if commentUserId != userId {
-		response := models.Message{"You are not authorized to delete this comment"}
+		// response := models.Message{"You are not authorized to delete this comment"}
+		response := *models.NewMessage("You are not authorized to delete this comment")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -262,7 +268,8 @@ func (ch *CommentHandlers) deleteComment(w http.ResponseWriter, r *http.Request)
 		w.Write([]byte(err.Error()))
 		return
 	}
-	response := models.Message{"Comment successfully Deleted"}
+	// response := models.Message{"Comment successfully Deleted"}
+	response := *models.NewMessage("Comment successfully Deleted")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
