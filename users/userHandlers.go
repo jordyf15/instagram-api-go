@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -108,6 +109,13 @@ func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 
 	var updatedUser User
+	newpath := filepath.Join(".", "profile_pictures")
+	err = os.MkdirAll(newpath, os.ModePerm)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	if err == nil {
 		defer profilePictureFile.Close()
 		originalProfilePicture, _, err := image.Decode(profilePictureFile)

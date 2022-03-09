@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -67,6 +68,13 @@ func (ph *PostHandlers) postPostHandler(w http.ResponseWriter, r *http.Request) 
 	formData := r.MultipartForm
 	visualMedias := formData.File["visual_medias"]
 	var visualMediaUrls []string
+	newpath := filepath.Join(".", "visual_medias")
+	err = os.MkdirAll(newpath, os.ModePerm)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 	for k := range visualMedias {
 		visualMedia, err := visualMedias[k].Open()
 		if err != nil {
