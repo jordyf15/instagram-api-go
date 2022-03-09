@@ -14,11 +14,11 @@ import (
 )
 
 type LikeHandlers struct {
-	service services.LikeService
+	service *services.LikeService
 	sync.Mutex
 }
 
-func NewLikeHandlers(service services.LikeService) *LikeHandlers {
+func NewLikeHandlers(service *services.LikeService) *LikeHandlers {
 	return &LikeHandlers{
 		service: service,
 	}

@@ -28,19 +28,19 @@ func main() {
 	commentsCollection := client.Database("instagram").Collection("comments")
 
 	userService := services.NewUserService(usersCollection)
-	userHandlers := handlers.NewUserHandlers(*userService)
+	userHandlers := handlers.NewUserHandlers(userService)
 
 	authenticationService := services.NewAuthenticationService(usersCollection)
-	authenticationHandlers := handlers.NewAuthenticationHandler(*authenticationService)
+	authenticationHandlers := handlers.NewAuthenticationHandler(authenticationService)
 
 	postService := services.NewPostService(postsCollection, likesCollection)
-	postHandlers := handlers.NewPostHandlers(*postService)
+	postHandlers := handlers.NewPostHandlers(postService)
 
 	likeService := services.NewLikeService(likesCollection)
-	likeHandlers := handlers.NewLikeHandlers(*likeService)
+	likeHandlers := handlers.NewLikeHandlers(likeService)
 
 	commentService := services.NewCommentService(commentsCollection, likesCollection)
-	commentHandlers := handlers.NewCommentHandlers(*commentService)
+	commentHandlers := handlers.NewCommentHandlers(commentService)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", userHandlers.PostUserHandler)

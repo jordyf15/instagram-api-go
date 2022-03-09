@@ -21,10 +21,10 @@ import (
 
 type UserHandlers struct {
 	sync.Mutex
-	service services.UserService
+	service *services.UserService
 }
 
-func NewUserHandlers(service services.UserService) *UserHandlers {
+func NewUserHandlers(service *services.UserService) *UserHandlers {
 	return &UserHandlers{
 		service: service,
 	}

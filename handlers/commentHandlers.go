@@ -16,11 +16,11 @@ import (
 )
 
 type CommentHandlers struct {
-	service services.CommentService
+	service *services.CommentService
 	sync.Mutex
 }
 
-func NewCommentHandlers(service services.CommentService) *CommentHandlers {
+func NewCommentHandlers(service *services.CommentService) *CommentHandlers {
 	return &CommentHandlers{
 		service: service,
 	}

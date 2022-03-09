@@ -21,10 +21,10 @@ import (
 
 type PostHandlers struct {
 	sync.Mutex
-	service services.PostService
+	service *services.PostService
 }
 
-func NewPostHandlers(service services.PostService) *PostHandlers {
+func NewPostHandlers(service *services.PostService) *PostHandlers {
 	return &PostHandlers{
 		service: service,
 	}

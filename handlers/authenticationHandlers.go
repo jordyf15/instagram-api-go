@@ -14,10 +14,10 @@ import (
 
 type AuthenticationHandlers struct {
 	sync.Mutex
-	service services.AuthenticationService
+	service *services.AuthenticationService
 }
 
-func NewAuthenticationHandler(service services.AuthenticationService) *AuthenticationHandlers {
+func NewAuthenticationHandler(service *services.AuthenticationService) *AuthenticationHandlers {
 	return &AuthenticationHandlers{
 		service: service,
 	}
