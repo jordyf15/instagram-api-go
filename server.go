@@ -34,10 +34,12 @@ func main() {
 	authenticationService := services.NewAuthenticationService(usersCollection)
 	authenticationHandlers := handlers.NewAuthenticationHandler(authenticationService)
 
-	postService := services.NewPostService(postsCollection, likesCollection)
+	postCollectionQuery := services.NewPostCollectionQuery(postsCollection, likesCollection)
+	postService := services.NewPostService(postCollectionQuery)
 	postHandlers := handlers.NewPostHandlers(postService)
 
-	likeService := services.NewLikeService(likesCollection)
+	likeCollectionQuery := services.NewLikeCollectionQuery(likesCollection)
+	likeService := services.NewLikeService(likeCollectionQuery)
 	likeHandlers := handlers.NewLikeHandlers(likeService)
 
 	commentService := services.NewCommentService(commentsCollection, likesCollection)
