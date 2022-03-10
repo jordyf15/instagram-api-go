@@ -189,7 +189,7 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 	userIdToken := claims["user_id"]
 	userId := fmt.Sprintf("%v", userIdToken)
 	ph.Lock()
-	postUserId, err := ph.service.FindPost(postId)
+	postUserId, err := ph.service.GetPostUserId(postId)
 	ph.Unlock()
 
 	if err != nil {
@@ -199,7 +199,6 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if postUserId != userId {
-		// response := models.Message{"You are not authorized to update this post"}
 		response := *models.NewMessage("You are not authorized to update this post")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
@@ -220,7 +219,6 @@ func (ph *PostHandlers) putPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// response := models.Message{"Post successfully Updated"}
 	response := *models.NewMessage("Post successfully Updated")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -250,7 +248,7 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 	userId := fmt.Sprintf("%v", userIdToken)
 
 	ph.Lock()
-	postUserId, err := ph.service.FindPost(postId)
+	postUserId, err := ph.service.GetPostUserId(postId)
 	ph.Unlock()
 
 	if err != nil {
@@ -260,7 +258,6 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if postUserId != userId {
-		// response := models.Message{}
 		response := *models.NewMessage("You are not authorized to delete this post")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
@@ -281,8 +278,6 @@ func (ph *PostHandlers) deletePostHandler(w http.ResponseWriter, r *http.Request
 		w.Write([]byte(err.Error()))
 		return
 	}
-
-	// response := models.Message{"Post successfully Deleted"}
 	response := models.NewMessage("Post successfully Deleted")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
