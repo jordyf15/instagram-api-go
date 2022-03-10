@@ -27,7 +27,8 @@ func main() {
 	likesCollection := client.Database("instagram").Collection("likes")
 	commentsCollection := client.Database("instagram").Collection("comments")
 
-	userService := services.NewUserService(usersCollection)
+	userCollectionQuery := services.NewUserCollectionQuery(usersCollection)
+	userService := services.NewUserService(userCollectionQuery)
 	userHandlers := handlers.NewUserHandlers(userService)
 
 	authenticationService := services.NewAuthenticationService(usersCollection)

@@ -11,12 +11,40 @@ import (
 )
 
 type UserService struct {
+	collectionQuerys userCollectionQueryable
+}
+
+type userCollectionQueryable interface {
+	insertOne(context.Context, interface{}) (*mongo.InsertOneResult, error)
+	findOne(context.Context, interface{}, *models.User) error
+	updateOne(context.Context, interface{}, interface{}) (*mongo.UpdateResult, error)
+}
+
+type userCollectionQuery struct {
 	collection *mongo.Collection
 }
 
-func NewUserService(collection *mongo.Collection) *UserService {
-	return &UserService{
+func NewUserCollectionQuery(collection *mongo.Collection) *userCollectionQuery {
+	return &userCollectionQuery{
 		collection: collection,
+	}
+}
+
+func (ucq *userCollectionQuery) insertOne(context context.Context, document interface{}) (*mongo.InsertOneResult, error) {
+	return ucq.collection.InsertOne(context, document)
+}
+
+func (ucq *userCollectionQuery) findOne(context context.Context, filter interface{}, willBeUpdatedUser *models.User) error {
+	return ucq.collection.FindOne(context, filter).Decode(willBeUpdatedUser)
+}
+
+func (ucq *userCollectionQuery) updateOne(context context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error) {
+	return ucq.collection.UpdateOne(context, filter, update)
+}
+
+func NewUserService(userCollectionQuery userCollectionQueryable) *UserService {
+	return &UserService{
+		collectionQuerys: userCollectionQuery,
 	}
 }
 
@@ -34,7 +62,7 @@ func (us *UserService) InsertUser(user models.User) error {
 		primitive.E{Key: "profile_pictures", Value: nil},
 	}
 
-	result, err := us.collection.InsertOne(context.TODO(), newUser)
+	result, err := us.collectionQuerys.insertOne(context.TODO(), newUser)
 	if err != nil {
 		return err
 	}
@@ -47,7 +75,7 @@ func (us *UserService) InsertUser(user models.User) error {
 func (us *UserService) UpdateUser(newUserData models.User) error {
 	var willBeUpdatedUser models.User
 	filter := bson.M{"_id": newUserData.Id}
-	err := us.collection.FindOne(context.TODO(), filter).Decode(&willBeUpdatedUser)
+	err := us.collectionQuerys.findOne(context.TODO(), filter, &willBeUpdatedUser)
 	if err != nil {
 		return err
 	}
@@ -79,7 +107,7 @@ func (us *UserService) UpdateUser(newUserData models.User) error {
 	},
 	},
 	}
-	_, err = us.collection.UpdateOne(context.TODO(), filter, update)
+	_, err = us.collectionQuerys.updateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
 	}
