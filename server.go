@@ -42,7 +42,8 @@ func main() {
 	likeService := services.NewLikeService(likeCollectionQuery)
 	likeHandlers := handlers.NewLikeHandlers(likeService)
 
-	commentService := services.NewCommentService(commentsCollection, likesCollection)
+	commentCollectionQuery := services.NewCommentCollectionQuery(commentsCollection, likesCollection)
+	commentService := services.NewCommentService(commentCollectionQuery)
 	commentHandlers := handlers.NewCommentHandlers(commentService)
 
 	mux := http.NewServeMux()
