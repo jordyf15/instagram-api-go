@@ -31,7 +31,9 @@ func main() {
 	userService := services.NewUserService(userCollectionQuery)
 	userHandlers := handlers.NewUserHandlers(userService)
 
-	authenticationService := services.NewAuthenticationService(usersCollection)
+	authenticationVerification := services.NewAuthenticationVerification()
+	authenticationQuery := services.NewAuthenticationQuery(usersCollection)
+	authenticationService := services.NewAuthenticationService(authenticationQuery, authenticationVerification)
 	authenticationHandlers := handlers.NewAuthenticationHandler(authenticationService)
 
 	postCollectionQuery := services.NewPostCollectionQuery(postsCollection, likesCollection)
