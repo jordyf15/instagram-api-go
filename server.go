@@ -29,7 +29,7 @@ func main() {
 
 	userCollectionQuery := services.NewUserCollectionQuery(usersCollection)
 	userService := services.NewUserService(userCollectionQuery)
-	userHandlers := handlers.NewUserHandlers(userService)
+	userHandlers := handlers.NewUserHandlers(userService, nil, nil)
 
 	authenticationVerification := services.NewAuthenticationVerification()
 	authenticationQuery := services.NewAuthenticationQuery(usersCollection)

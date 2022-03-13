@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,10 +15,18 @@ type UserService struct {
 	collectionQuerys userCollectionQueryable
 }
 
+type IUserService interface {
+	InsertUser(models.User) error
+	UpdateUser(models.User) error
+	CheckIfUsernameExist(string) (bool, error)
+	CheckIfUserExist(string) (bool, error)
+}
+
 type userCollectionQueryable interface {
 	insertOne(context.Context, interface{}) (*mongo.InsertOneResult, error)
 	findOne(context.Context, interface{}, *models.User) error
 	updateOne(context.Context, interface{}, interface{}) (*mongo.UpdateResult, error)
+	find(context.Context, interface{}) (*[]bson.M, error)
 }
 
 type userCollectionQuery struct {
@@ -40,6 +49,18 @@ func (ucq *userCollectionQuery) findOne(context context.Context, filter interfac
 
 func (ucq *userCollectionQuery) updateOne(context context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error) {
 	return ucq.collection.UpdateOne(context, filter, update)
+}
+
+func (ucq *userCollectionQuery) find(context context.Context, filter interface{}) (*[]bson.M, error) {
+	cursor, err := ucq.collection.Find(context, filter, options.Find().SetLimit(1))
+	if err != nil {
+		return nil, err
+	}
+	var queryResult []bson.M
+	if err = cursor.All(context, &queryResult); err != nil {
+		return nil, err
+	}
+	return &queryResult, nil
 }
 
 func NewUserService(userCollectionQuery userCollectionQueryable) *UserService {
@@ -70,6 +91,32 @@ func (us *UserService) InsertUser(user models.User) error {
 		return nil
 	}
 	return nil
+}
+
+func (us *UserService) CheckIfUsernameExist(username string) (bool, error) {
+	filter := bson.M{"username": username}
+	queryResult, err := us.collectionQuerys.find(context.TODO(), filter)
+	if err != nil {
+		return true, err
+	}
+	if len(*queryResult) == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
+func (us *UserService) CheckIfUserExist(id string) (bool, error) {
+	filter := bson.M{"_id": id}
+	queryResult, err := us.collectionQuerys.find(context.TODO(), filter)
+	if err != nil {
+		return true, err
+	}
+	if len(*queryResult) == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }
 
 func (us *UserService) UpdateUser(newUserData models.User) error {

@@ -7,12 +7,14 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var insertOneMock func(context.Context, interface{}) (*mongo.InsertOneResult, error)
 var findOneMock func(context.Context, interface{}, *models.User) error
 var updateOneMock func(context.Context, interface{}, interface{}) (*mongo.UpdateResult, error)
+var findMock func(context.Context, interface{}) (*[]bson.M, error)
 
 type userCollectionQueryMock struct {
 }
@@ -27,6 +29,10 @@ func (ucqm *userCollectionQueryMock) findOne(context context.Context, filter int
 
 func (ucqm *userCollectionQueryMock) updateOne(context context.Context, filter interface{}, update interface{}) (*mongo.UpdateResult, error) {
 	return updateOneMock(context, filter, update)
+}
+
+func (ucqm *userCollectionQueryMock) find(context context.Context, filter interface{}) (*[]bson.M, error) {
+	return findMock(context, filter)
 }
 
 func newUserCollectionQueryMock() *userCollectionQueryMock {
@@ -108,4 +114,65 @@ func TestUpdateUser(t *testing.T) {
 		t.Error("if FindOne and UpdateOne query does not throws an error then UpdateUser should also not throw error")
 	}
 
+}
+
+func TestCheckIfUsernameExist(t *testing.T) {
+	usercolQueryMock := newUserCollectionQueryMock()
+	userService := NewUserService(usercolQueryMock)
+	username := "jordyf15"
+	findMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, errors.New("Find on db returns error")
+	}
+	if _, err := userService.CheckIfUsernameExist(username); err == nil {
+		t.Error("If Find on db returns error then CheckIfUsernameExist should also return error")
+	}
+
+	findMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{{"_id": "user-45d6cd8e-795a-4710-9e81-5332d57e819b", "username": "jordyf15", "full_name": "jordy ferdian", "password": "jordyjordy", "email": "jordyferdian88@gmail.com", "profile_pictures": nil}}, nil
+	}
+	isUsernameExist, err := userService.CheckIfUsernameExist(username)
+	if err != nil {
+		t.Error("If Find on db does not returns error then CheckIfUsernameExist should also not return error")
+	}
+	if !isUsernameExist {
+		t.Error("If Find on db does return a user then CheckIfUsername exist should return true")
+	}
+
+	findMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, nil
+	}
+	if isUsernameExist, _ := userService.CheckIfUsernameExist(username); isUsernameExist {
+		t.Error("If Find on db return nothing then CheckIfUsernameExist should return false")
+	}
+}
+
+func TestCheckIfUserExist(t *testing.T) {
+	usercolQueryMock := newUserCollectionQueryMock()
+	userService := NewUserService(usercolQueryMock)
+	userId := "user-45d6cd8e-795a-4710-9e81-5332d57e819b"
+	findMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, errors.New("Find on db returns error")
+	}
+	if _, err := userService.CheckIfUserExist(userId); err == nil {
+		t.Error("If Find on db returns error then CheckIfUserExist should also return error")
+	}
+
+	findMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{{"_id": "user-45d6cd8e-795a-4710-9e81-5332d57e819b", "username": "jordyf15", "full_name": "jordy ferdian", "password": "jordyjordy", "email": "jordyferdian88@gmail.com", "profile_pictures": nil}}, nil
+	}
+	isUserExist, err := userService.CheckIfUserExist(userId)
+	if err != nil {
+		t.Error("If Find on db does not return error then CheckIfUserExist should also not return error")
+	}
+	if !isUserExist {
+		t.Error("if FInd on db return a user then CheckIfUserExist should return true")
+	}
+
+	findMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, nil
+	}
+	isUserExist, _ = userService.CheckIfUserExist(userId)
+	if isUserExist {
+		t.Error("If Find on db does not return a user then CheckIfUserExist should return false")
+	}
 }
