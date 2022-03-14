@@ -9,6 +9,7 @@ import (
 	_ "image/png"
 	"instagram-go/models"
 	"io"
+	"io/fs"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -26,6 +27,7 @@ var checkIfUserExist func(string) (bool, error)
 var decodeImageMock func(io.Reader) (image.Image, string, error)
 var resizeAndSaveFileToLocaleMock func(string, image.Image, string, string) (string, error)
 var getUserIdFromTokenMock func(string) (string, error)
+var mkDirAllMock func(string, fs.FileMode) error
 
 type userServiceMock struct {
 }
@@ -74,6 +76,10 @@ func (fohm *fileOsHandlerMock) decodeImage(r io.Reader) (image.Image, string, er
 
 func (fohm *fileOsHandlerMock) resizeAndSaveFileToLocale(size string, originalProfilePicture image.Image, userId string, fileType string) (string, error) {
 	return resizeAndSaveFileToLocaleMock(size, originalProfilePicture, userId, fileType)
+}
+
+func (fohm *fileOsHandlerMock) mkDirAll(path string, perm fs.FileMode) error {
+	return mkDirAllMock(path, perm)
 }
 
 func TestPostUserHandler(t *testing.T) {
@@ -322,6 +328,9 @@ func TestPutUserHandler(t *testing.T) {
 	userId := "user-45d6cd8e-795a-4710-9e81-5332d57e819b"
 	urlLink := "/users/" + userId
 
+	mkDirAllMock = func(s string, fm fs.FileMode) error {
+		return nil
+	}
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	fw, err := writer.CreateFormField("username")

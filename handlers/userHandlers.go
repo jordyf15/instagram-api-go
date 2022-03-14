@@ -10,6 +10,7 @@ import (
 	"instagram-go/models"
 	"instagram-go/services"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -72,6 +73,7 @@ type fileOsHandler struct {
 type IFileOsHandler interface {
 	decodeImage(io.Reader) (image.Image, string, error)
 	resizeAndSaveFileToLocale(string, image.Image, string, string) (string, error)
+	mkDirAll(string, fs.FileMode) error
 }
 
 func newFileOsHandler() *fileOsHandler {
@@ -80,6 +82,10 @@ func newFileOsHandler() *fileOsHandler {
 
 func (foh *fileOsHandler) decodeImage(r io.Reader) (image.Image, string, error) {
 	return image.Decode(r)
+}
+
+func (foh *fileOsHandler) mkDirAll(path string, perm fs.FileMode) error {
+	return os.MkdirAll(path, perm)
 }
 
 func (foh *fileOsHandler) resizeAndSaveFileToLocale(size string, originalProfilePicture image.Image, userId string, fileType string) (string, error) {
@@ -230,10 +236,17 @@ func (uh *UserHandlers) PostUserHandler(w http.ResponseWriter, r *http.Request) 
 
 func (uh *UserHandlers) PutUserHandler(w http.ResponseWriter, r *http.Request) {
 	newpath := filepath.Join(".", "profile_pictures")
-	err := os.MkdirAll(newpath, os.ModePerm)
+	err := uh.fileOsHandler.mkDirAll(newpath, os.ModePerm)
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 	err = nil
