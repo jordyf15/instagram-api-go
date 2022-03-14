@@ -42,7 +42,7 @@ func main() {
 
 	likeCollectionQuery := services.NewLikeCollectionQuery(likesCollection)
 	likeService := services.NewLikeService(likeCollectionQuery)
-	likeHandlers := handlers.NewLikeHandlers(likeService)
+	likeHandlers := handlers.NewLikeHandlers(likeService, nil)
 
 	commentCollectionQuery := services.NewCommentCollectionQuery(commentsCollection, likesCollection)
 	commentService := services.NewCommentService(commentCollectionQuery)
