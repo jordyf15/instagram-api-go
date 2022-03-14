@@ -38,7 +38,7 @@ func main() {
 
 	postCollectionQuery := services.NewPostCollectionQuery(postsCollection, likesCollection)
 	postService := services.NewPostService(postCollectionQuery)
-	postHandlers := handlers.NewPostHandlers(postService)
+	postHandlers := handlers.NewPostHandlers(postService, nil, nil)
 
 	likeCollectionQuery := services.NewLikeCollectionQuery(likesCollection)
 	likeService := services.NewLikeService(likeCollectionQuery)

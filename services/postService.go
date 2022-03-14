@@ -14,6 +14,15 @@ type PostService struct {
 	collectionQuerys postCollectionQueryable
 }
 
+type IPostService interface {
+	InsertPost(models.Post) error
+	FindAllPost() ([]models.Post, error)
+	GetPostUserId(string) (string, error)
+	UpdatePost(string, string) error
+	CheckIfPostExist(string) (bool, error)
+	DeletePost(string) error
+}
+
 type postCollectionQueryable interface {
 	postInsertOne(context.Context, interface{}) (*mongo.InsertOneResult, error)
 	postUpdateOne(context.Context, interface{}, interface{}) (*mongo.UpdateResult, error)
@@ -175,4 +184,17 @@ func (ps *PostService) DeletePost(postId string) error {
 		return err
 	}
 	return nil
+}
+
+func (ps *PostService) CheckIfPostExist(postId string) (bool, error) {
+	filter := bson.M{"_id": postId}
+	queryResult, err := ps.collectionQuerys.postFind(context.TODO(), filter)
+	if err != nil {
+		return false, err
+	}
+	if len(*queryResult) == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }

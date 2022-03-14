@@ -242,3 +242,42 @@ func TestDeletePost(t *testing.T) {
 		t.Error("If DeleteOne to db does not return an error then DeletePost should also not return an error")
 	}
 }
+
+func TestCheckIfPostExist(t *testing.T) {
+	postColQueryMock := newPostCollectionQueryMock()
+	postService := NewPostService(postColQueryMock)
+	searchedPostId := "post-8b652b94-ff70-444c-a044-266ec7779c45"
+
+	postFindMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, errors.New("Find on db returns error")
+	}
+	if _, err := postService.CheckIfPostExist(searchedPostId); err == nil {
+		t.Error("If Find on db returns error than CheckIfPostExist should also return error")
+	}
+
+	postFindMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, nil
+	}
+	isExist, err := postService.CheckIfPostExist(searchedPostId)
+	if err != nil {
+		t.Error("If Find on db does not return error than CheckIfPostExist should also not return error")
+	}
+	if isExist {
+		t.Error("If Find on db does not return any post than CheckIfPostExist should return false")
+	}
+
+	postFindMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{{"_id": "post-" + uuid.NewString(),
+			"user_id":           "user-" + uuid.NewString(),
+			"visual_media_urls": []string{},
+			"caption":           "a new caption",
+			"like_count":        0,
+			"created_date":      primitive.NewDateTimeFromTime(time.Now()),
+			"updated_date":      primitive.NewDateTimeFromTime(time.Now()),
+		}}, nil
+	}
+	isExist, _ = postService.CheckIfPostExist(searchedPostId)
+	if !isExist {
+		t.Error("If Find on db does return a post than CheckIfPostExist should return true")
+	}
+}
