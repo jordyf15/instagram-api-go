@@ -14,6 +14,14 @@ type LikeService struct {
 	collectionQuerys likeCollectionQueryable
 }
 
+type ILikeService interface {
+	InsertLike(models.Like) error
+	DeleteLike(string) error
+	IsLikeExist(string, string, string) (bool, error)
+	GetLikeUserId(string) (string, error)
+	IsLikeExistById(string) (bool, error)
+}
+
 func NewLikeService(likeCollectionQuery likeCollectionQueryable) *LikeService {
 	return &LikeService{collectionQuerys: likeCollectionQuery}
 }
@@ -82,6 +90,19 @@ func (ls *LikeService) DeleteLike(likeId string) error {
 
 func (ls *LikeService) IsLikeExist(userId string, resourceId string, resourceType string) (bool, error) {
 	filter := bson.M{"resource_id": resourceId, "user_id": userId, "resource_type": resourceType}
+	queryResult, err := ls.collectionQuerys.find(context.TODO(), filter)
+	if err != nil {
+		return true, err
+	}
+	if len(*queryResult) == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
+func (ls *LikeService) IsLikeExistById(likeId string) (bool, error) {
+	filter := bson.M{"_id": likeId}
 	queryResult, err := ls.collectionQuerys.find(context.TODO(), filter)
 	if err != nil {
 		return true, err

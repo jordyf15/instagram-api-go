@@ -20,6 +20,15 @@ func NewCommentService(commentCollectionQuery commentCollectionQueryable) *Comme
 	}
 }
 
+type ICommentService interface {
+	GetCommentUserId(string) (string, error)
+	FindAllPostComment(string) ([]models.Comment, error)
+	InsertComment(models.Comment) error
+	UpdateComment(string, string) error
+	DeleteComment(string) error
+	CheckIfCommentExist(string) (bool, error)
+}
+
 type commentCollectionQueryable interface {
 	findOneComment(context.Context, interface{}) (*models.Comment, error)
 	findCommentLike(context.Context, interface{}) (*[]bson.M, error)
@@ -27,6 +36,7 @@ type commentCollectionQueryable interface {
 	insertOneComment(context.Context, interface{}) (*mongo.InsertOneResult, error)
 	updateOneComment(context.Context, interface{}, interface{}) (*mongo.UpdateResult, error)
 	deleteOneComment(context.Context, interface{}) (*mongo.DeleteResult, error)
+	findComment(context.Context, interface{}) (*[]bson.M, error)
 }
 
 type commentCollectionQuery struct {
@@ -39,6 +49,18 @@ func NewCommentCollectionQuery(commentCollection *mongo.Collection, likeCollecti
 		commentCollection: commentCollection,
 		likeCollection:    likeCollection,
 	}
+}
+
+func (ccq *commentCollectionQuery) findComment(context context.Context, filter interface{}) (*[]bson.M, error) {
+	cursor, err := ccq.commentCollection.Find(context, filter)
+	if err != nil {
+		return nil, err
+	}
+	var queryResult []bson.M
+	if err = cursor.All(context, &queryResult); err != nil {
+		return nil, err
+	}
+	return &queryResult, nil
 }
 
 func (ccq *commentCollectionQuery) findOneComment(context context.Context, filter interface{}) (*models.Comment, error) {
@@ -165,4 +187,17 @@ func (cs *CommentService) DeleteComment(deletedCommentId string) error {
 		return err
 	}
 	return nil
+}
+
+func (cs *CommentService) CheckIfCommentExist(commentId string) (bool, error) {
+	filter := bson.M{"_id": commentId}
+	queryResult, err := cs.collectionQuerys.findComment(context.TODO(), filter)
+	if err != nil {
+		return false, err
+	}
+	if len(*queryResult) == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }

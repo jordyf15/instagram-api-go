@@ -42,11 +42,12 @@ func main() {
 
 	likeCollectionQuery := services.NewLikeCollectionQuery(likesCollection)
 	likeService := services.NewLikeService(likeCollectionQuery)
-	likeHandlers := handlers.NewLikeHandlers(likeService, nil)
 
 	commentCollectionQuery := services.NewCommentCollectionQuery(commentsCollection, likesCollection)
 	commentService := services.NewCommentService(commentCollectionQuery)
 	commentHandlers := handlers.NewCommentHandlers(commentService)
+
+	likeHandlers := handlers.NewLikeHandlers(likeService, postService, commentService, nil)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/users", userHandlers.PostUserHandler)

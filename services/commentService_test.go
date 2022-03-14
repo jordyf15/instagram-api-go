@@ -19,12 +19,17 @@ var findPostCommentMock func(context.Context, interface{}) (*[]bson.M, error)
 var insertOneCommentMock func(context.Context, interface{}) (*mongo.InsertOneResult, error)
 var updateOneCommentMock func(context.Context, interface{}, interface{}) (*mongo.UpdateResult, error)
 var deleteOneCommentMock func(context.Context, interface{}) (*mongo.DeleteResult, error)
+var findCommentMock func(context.Context, interface{}) (*[]bson.M, error)
 
 type commentCollectionQueryMock struct {
 }
 
 func newCommentCollectionQueryMock() *commentCollectionQueryMock {
 	return &commentCollectionQueryMock{}
+}
+
+func (ccqm *commentCollectionQueryMock) findComment(context context.Context, filter interface{}) (*[]bson.M, error) {
+	return findCommentMock(context, filter)
 }
 
 func (ccqm *commentCollectionQueryMock) findOneComment(context context.Context, filter interface{}) (*models.Comment, error) {
@@ -49,6 +54,46 @@ func (ccqm *commentCollectionQueryMock) updateOneComment(context context.Context
 
 func (ccqm *commentCollectionQueryMock) deleteOneComment(context context.Context, filter interface{}) (*mongo.DeleteResult, error) {
 	return deleteOneCommentMock(context, filter)
+}
+
+func TestCheckIfCommentExist(t *testing.T) {
+	commentColQueryMock := newCommentCollectionQueryMock()
+	commentService := NewCommentService(commentColQueryMock)
+	commentId := "comment-1cab874c-d558-45a2-aaef-6487a415c261"
+	comments := []bson.M{
+		{"_id": "comment-" + uuid.NewString(),
+			"post_id":      "post-" + uuid.NewString(),
+			"user_id":      "user-" + uuid.NewString(),
+			"comment":      "a comment",
+			"like_count":   0,
+			"created_date": primitive.NewDateTimeFromTime(time.Now()),
+			"updated_date": primitive.NewDateTimeFromTime(time.Now())},
+	}
+	findCommentMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return nil, errors.New("find to db return error")
+	}
+	if _, err := commentService.CheckIfCommentExist(commentId); err == nil {
+		t.Error("If find to db return error than CheckIfCommentExist should also return error")
+	}
+
+	findCommentMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &[]bson.M{}, nil
+	}
+	isExist, err := commentService.CheckIfCommentExist(commentId)
+	if err != nil {
+		t.Error("If find to db does not return error than CheckIfCommentExist should also not return error")
+	}
+	if isExist {
+		t.Error("If find to db does not return result than CheckIfCommentExist should not return true")
+	}
+
+	findCommentMock = func(ctx context.Context, i interface{}) (*[]bson.M, error) {
+		return &comments, nil
+	}
+	isExist, _ = commentService.CheckIfCommentExist(commentId)
+	if !isExist {
+		t.Error("If find to db does return result than CheckIfCommentExist should return true")
+	}
 }
 
 func TestGetCommentUserId(t *testing.T) {
