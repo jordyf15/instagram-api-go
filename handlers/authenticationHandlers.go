@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"instagram-go/models"
 	"instagram-go/services"
 	"io/ioutil"
 	"net/http"
@@ -14,10 +14,10 @@ import (
 
 type AuthenticationHandlers struct {
 	sync.Mutex
-	service *services.AuthenticationService
+	service services.IAuthenticationService
 }
 
-func NewAuthenticationHandler(service *services.AuthenticationService) *AuthenticationHandlers {
+func NewAuthenticationHandler(service services.IAuthenticationService) *AuthenticationHandlers {
 	return &AuthenticationHandlers{
 		service: service,
 	}
@@ -27,22 +27,55 @@ func (ah *AuthenticationHandlers) PostAuthenticationHandler(w http.ResponseWrite
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
-	}
-
-	ct := r.Header.Get("content-type")
-	if ct != "application/json" {
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-		w.Write([]byte(fmt.Sprintf("need content-type 'application/json', but got '%s'", ct)))
+		w.Write(responseBytes)
 		return
 	}
 
 	var credential credential
 	err = json.Unmarshal(bodyBytes, &credential)
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(responseBytes)
+		return
+	}
+	var badInput bool
+	errorMessage := ""
+	if credential.Password == "" {
+		badInput = true
+		errorMessage += "Password must not be empty"
+	}
+	if credential.Username == "" {
+		if badInput {
+			errorMessage += ", "
+		}
+		badInput = true
+		errorMessage += "Username must not be empty"
+	}
+	if badInput {
+		response := models.NewMessage(errorMessage)
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 
@@ -50,9 +83,29 @@ func (ah *AuthenticationHandlers) PostAuthenticationHandler(w http.ResponseWrite
 	userId, err := ah.service.VerifyCredential(credential.Username, credential.Password)
 	defer ah.Unlock()
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(err.Error()))
-		return
+		if err.Error() == "username not found" {
+			response := models.NewMessage("User does not exist")
+			responseBytes, err := json.Marshal(response)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write(responseBytes)
+			return
+		} else {
+			response := models.NewMessage("Password is wrong")
+			responseBytes, err := json.Marshal(response)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+				return
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(responseBytes)
+			return
+		}
 	}
 
 	claims := jwt.MapClaims{}
@@ -62,8 +115,16 @@ func (ah *AuthenticationHandlers) PostAuthenticationHandler(w http.ResponseWrite
 	sign := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err := sign.SignedString([]byte("secret"))
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
+		return
 	}
 
 	data := data{token}

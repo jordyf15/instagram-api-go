@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"instagram-go/models"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,6 +20,10 @@ func NewAuthenticationService(authenticationQuerys authenticationQueryable, auth
 		authenticationQuerys:       authenticationQuerys,
 		authenticationVerification: authentificationVerification,
 	}
+}
+
+type IAuthenticationService interface {
+	VerifyCredential(string, string) (string, error)
 }
 
 type authenticationQueryable interface {
@@ -60,12 +65,12 @@ func (as *AuthenticationService) VerifyCredential(username string, password stri
 	filter := bson.M{"username": username}
 	user, err := as.authenticationQuerys.findOneUser(context.TODO(), filter)
 	if err != nil {
-		return "", err
+		return "", errors.New("username not found")
 	}
 	err = as.authenticationVerification.compareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return "", err
+		return "", errors.New("password not match")
 	}
 
-	return user.Id, err
+	return user.Id, nil
 }
