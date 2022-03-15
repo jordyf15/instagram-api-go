@@ -16,14 +16,44 @@ import (
 )
 
 type CommentHandlers struct {
-	service *services.CommentService
+	commentService services.ICommentService
+	postService    services.IPostService
 	sync.Mutex
+	commentHandlerHeader ICommentHandlerHeader
 }
 
-func NewCommentHandlers(service *services.CommentService) *CommentHandlers {
-	return &CommentHandlers{
-		service: service,
+func NewCommentHandlers(commentService services.ICommentService, postService services.IPostService, commentHandlerHeader ICommentHandlerHeader) *CommentHandlers {
+	if commentHandlerHeader == nil {
+		commentHandlerHeader = newCommentHandlerHeader()
 	}
+	return &CommentHandlers{
+		commentService:       commentService,
+		postService:          postService,
+		commentHandlerHeader: commentHandlerHeader,
+	}
+}
+
+type ICommentHandlerHeader interface {
+	getUserIdFromToken(string) (string, error)
+}
+
+type commentHandlerHeader struct {
+}
+
+func newCommentHandlerHeader() *commentHandlerHeader {
+	return &commentHandlerHeader{}
+}
+
+func (chh *commentHandlerHeader) getUserIdFromToken(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+	if err != nil {
+		return "", err
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	userId := fmt.Sprintf("%v", claims["user_id"])
+	return userId, nil
 }
 
 func (ch *CommentHandlers) Comments(w http.ResponseWriter, r *http.Request) {
@@ -51,16 +81,49 @@ func (ch *CommentHandlers) Comment(w http.ResponseWriter, r *http.Request) {
 func (ch *CommentHandlers) getComments(w http.ResponseWriter, r *http.Request) {
 	urlParts := strings.Split(r.URL.String(), "/")
 	postId := urlParts[2]
-
 	ch.Lock()
-	comments, err := ch.service.FindAllPostComment(postId)
-	defer ch.Unlock()
+	isPostExist, err := ch.postService.CheckIfPostExist(postId)
+	ch.Unlock()
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
-	// response := models.DataResponseComments{models.DataComments{comments}}
+	if !isPostExist {
+		response := models.NewMessage("Post does not exist")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseBytes)
+		return
+	}
+
+	ch.Lock()
+	comments, err := ch.commentService.FindAllPostComment(postId)
+	defer ch.Unlock()
+	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(responseBytes)
+		return
+	}
 	dataComments := *models.NewDataComments(comments)
 	response := *models.NewDataResponseComments(dataComments)
 	responseBytes, err := json.Marshal(response)
@@ -74,22 +137,52 @@ func (ch *CommentHandlers) getComments(w http.ResponseWriter, r *http.Request) {
 }
 func (ch *CommentHandlers) postComment(w http.ResponseWriter, r *http.Request) {
 	tokenString := r.Header.Get("Authorization")
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
+
+	userId, err := ch.commentHandlerHeader.getUserIdFromToken(tokenString)
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	userIdToken := claims["user_id"]
-	userId := fmt.Sprintf("%v", userIdToken)
 	newCommentId := "comment-" + uuid.NewString()
 
 	urlParts := strings.Split(r.URL.String(), "/")
 	postId := urlParts[2]
 
+	ch.Lock()
+	isPostExist, err := ch.postService.CheckIfPostExist(postId)
+	ch.Unlock()
+	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(responseBytes)
+		return
+	}
+	if !isPostExist {
+		response := models.NewMessage("Post does not exist")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseBytes)
+		return
+	}
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
@@ -111,6 +204,19 @@ func (ch *CommentHandlers) postComment(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
+
+	if comment.Comment == "" {
+		response := models.NewMessage("Comment must not be empty")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseBytes)
+		return
+	}
 	comment.Id = newCommentId
 	comment.PostId = postId
 	comment.UserId = userId
@@ -118,14 +224,20 @@ func (ch *CommentHandlers) postComment(w http.ResponseWriter, r *http.Request) {
 	comment.UpdatedDate = comment.CreatedDate
 
 	ch.Lock()
-	err = ch.service.InsertComment(comment)
+	err = ch.commentService.InsertComment(comment)
 	defer ch.Unlock()
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
-	// response := models.Message{"Comment successfully Created"}
 	response := *models.NewMessage("Comment successfully Created")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -141,8 +253,15 @@ func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 
@@ -156,8 +275,15 @@ func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 	var comment models.Comment
 	err = json.Unmarshal(bodyBytes, &comment)
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 
@@ -165,30 +291,65 @@ func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 	commentId := urlParts[4]
 
 	tokenString := r.Header.Get("Authorization")
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
+	userId, err := ch.commentHandlerHeader.getUserIdFromToken(tokenString)
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	userIdToken := claims["user_id"]
-	userId := fmt.Sprintf("%v", userIdToken)
+	ch.Lock()
+	isCommentExist, err := ch.commentService.CheckIfCommentExist(commentId)
+	ch.Unlock()
+	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(responseBytes)
+		return
+	}
+	if !isCommentExist {
+		response := models.NewMessage("Comment does not exist")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseBytes)
+		return
+	}
 
 	ch.Lock()
-	commentUserId, err := ch.service.GetCommentUserId(commentId)
+	commentUserId, err := ch.commentService.GetCommentUserId(commentId)
 	ch.Unlock()
 
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 	if commentUserId != userId {
-		// response := models.Message{"You are not authorized to update this comment"}
-		response := *models.NewMessage("You are not authorized to update this comment")
+		response := *models.NewMessage("User is not authorized to update this comment")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -199,16 +360,34 @@ func (ch *CommentHandlers) putComment(w http.ResponseWriter, r *http.Request) {
 		w.Write(responseBytes)
 		return
 	}
+	if comment.Comment == "" {
+		response := models.NewMessage("Comment must not be empty")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseBytes)
+		return
+	}
 	ch.Lock()
-	err = ch.service.UpdateComment(commentId, comment.Comment)
+	err = ch.commentService.UpdateComment(commentId, comment.Comment)
 	defer ch.Unlock()
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 
-	// response := models.Message{"Comment successfully Updated"}
 	response := *models.NewMessage("Comment successfully Updated")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {
@@ -224,31 +403,66 @@ func (ch *CommentHandlers) deleteComment(w http.ResponseWriter, r *http.Request)
 	urlParts := strings.Split(r.URL.String(), "/")
 	commentId := urlParts[4]
 	tokenString := r.Header.Get("Authorization")
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
+	userId, err := ch.commentHandlerHeader.getUserIdFromToken(tokenString)
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	userIdToken := claims["user_id"]
-	userId := fmt.Sprintf("%v", userIdToken)
+	ch.Lock()
+	isCommentExist, err := ch.commentService.CheckIfCommentExist(commentId)
+	ch.Unlock()
+	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(responseBytes)
+		return
+	}
+	if !isCommentExist {
+		response := models.NewMessage("Comment does not exist")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(responseBytes)
+		return
+	}
 
 	ch.Lock()
-	commentUserId, err := ch.service.GetCommentUserId(commentId)
+	commentUserId, err := ch.commentService.GetCommentUserId(commentId)
 	ch.Unlock()
 
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
 
 	if commentUserId != userId {
-		// response := models.Message{"You are not authorized to delete this comment"}
-		response := *models.NewMessage("You are not authorized to delete this comment")
+		response := *models.NewMessage("User is not authorized to delete this comment")
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -261,14 +475,21 @@ func (ch *CommentHandlers) deleteComment(w http.ResponseWriter, r *http.Request)
 	}
 
 	ch.Lock()
-	err = ch.service.DeleteComment(commentId)
+	err = ch.commentService.DeleteComment(commentId)
 	defer ch.Unlock()
 	if err != nil {
+		response := models.NewMessage("An error has occured in our server")
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 		return
 	}
-	// response := models.Message{"Comment successfully Deleted"}
+
 	response := *models.NewMessage("Comment successfully Deleted")
 	responseBytes, err := json.Marshal(response)
 	if err != nil {

@@ -45,7 +45,7 @@ func main() {
 
 	commentCollectionQuery := services.NewCommentCollectionQuery(commentsCollection, likesCollection)
 	commentService := services.NewCommentService(commentCollectionQuery)
-	commentHandlers := handlers.NewCommentHandlers(commentService)
+	commentHandlers := handlers.NewCommentHandlers(commentService, postService, nil)
 
 	likeHandlers := handlers.NewLikeHandlers(likeService, postService, commentService, nil)
 
