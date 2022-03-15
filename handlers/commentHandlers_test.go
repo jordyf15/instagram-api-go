@@ -114,7 +114,7 @@ func TestGetComments(t *testing.T) {
 	handler := http.HandlerFunc(commentHandlers.getComments)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("getComments returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("getComments returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected := `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {

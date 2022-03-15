@@ -115,7 +115,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler := http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected := `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -141,7 +141,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -161,7 +161,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusBadRequest)
 	}
 	expected = `{"message":"Visual Medias must not be empty"}`
 	if rr.Body.String() != expected {
@@ -193,7 +193,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusBadRequest)
 	}
 	expected = `{"message":"Uploaded Visual Medias type is not supported"}`
 	if rr.Body.String() != expected {
@@ -293,7 +293,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -316,7 +316,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -336,7 +336,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusBadRequest)
 	}
 	expected = `{"message":"Caption must not be empty"}`
 	if rr.Body.String() != expected {
@@ -380,7 +380,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -400,7 +400,7 @@ func TestPostPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.postPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusCreated {
-		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PostPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusCreated)
 	}
 	expected = `{"message":"Post successfully Created"}`
 	if rr.Body.String() != expected {
@@ -430,7 +430,7 @@ func TestGetPostsHandler(t *testing.T) {
 	handler := http.HandlerFunc(postHandlers.getPostsHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("GetPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("GetPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected := `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -459,7 +459,7 @@ func TestGetPostsHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.getPostsHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("GetPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("GetPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusOK)
 	}
 }
 
@@ -486,7 +486,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler := http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected := `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -509,7 +509,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -529,7 +529,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusBadRequest)
 	}
 	expected = `{"message":"Post does not exist"}`
 	if rr.Body.String() != expected {
@@ -552,7 +552,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -572,7 +572,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusUnauthorized {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusUnauthorized)
 	}
 	expected = `{"message":"User is not authorized to update this post"}`
 	if rr.Body.String() != expected {
@@ -592,7 +592,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusBadRequest)
 	}
 	expected = `{"message":"Caption must not be empty"}`
 	if rr.Body.String() != expected {
@@ -614,7 +614,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -636,7 +636,7 @@ func TestPutPostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.putPostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusOK)
 	}
 	expected = `{"message":"Post successfully Updated"}`
 	if rr.Body.String() != expected {
@@ -667,11 +667,11 @@ func TestDeletePostHandler(t *testing.T) {
 	handler := http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected := `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 
 	// if checkIfPostExist return error
@@ -690,11 +690,11 @@ func TestDeletePostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 
 	// if checkIfPostExist return false
@@ -710,11 +710,11 @@ func TestDeletePostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusBadRequest)
 	}
 	expected = `{"message":"Post does not exist"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 
 	// if getPostUserId return error
@@ -733,11 +733,11 @@ func TestDeletePostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 
 	// if userid is not the same with getPostUserIdResult
@@ -753,11 +753,11 @@ func TestDeletePostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusUnauthorized {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusUnauthorized)
 	}
 	expected = `{"message":"User is not authorized to delete this post"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 
 	// if deletePost return error
@@ -776,11 +776,11 @@ func TestDeletePostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 
 	// if delete successfull
@@ -796,10 +796,10 @@ func TestDeletePostHandler(t *testing.T) {
 	handler = http.HandlerFunc(postHandlers.deletePostHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("PutPostHandler returned wrong status code: got %v instead of %v", rr.Code, status)
+		t.Errorf("DeletePostHandler returned wrong status code: got %v instead of %v", rr.Code, http.StatusOK)
 	}
 	expected = `{"message":"Post successfully Deleted"}`
 	if rr.Body.String() != expected {
-		t.Errorf("PutPostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
+		t.Errorf("DeletePostHandler returned wrong body: got %v instead of %v", rr.Body.String(), expected)
 	}
 }

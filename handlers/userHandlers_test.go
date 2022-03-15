@@ -223,7 +223,7 @@ func TestPostUserHandler(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusCreated {
 		t.Errorf("PostUserHandler returned wrong status code: got %v instead of %v",
-			status, http.StatusBadRequest)
+			status, http.StatusCreated)
 	}
 	expected = `{"message":"User successfully registered"}`
 	if rr.Body.String() != expected {
@@ -280,7 +280,7 @@ func TestPostUserHandler(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("PostUserHandler returned wrong status code: got %v instead of %v",
-			status, http.StatusBadRequest)
+			status, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -310,7 +310,7 @@ func TestPostUserHandler(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("PostUserHandler returned wrong status code: got %v instead of %v",
-			status, http.StatusBadRequest)
+			status, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -549,7 +549,7 @@ func TestPutUserHandler(t *testing.T) {
 	handler = http.HandlerFunc(userHandlers.PutUserHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusBadRequest)
+		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -572,7 +572,7 @@ func TestPutUserHandler(t *testing.T) {
 	handler = http.HandlerFunc(userHandlers.PutUserHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusBadRequest)
+		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -595,7 +595,7 @@ func TestPutUserHandler(t *testing.T) {
 	handler = http.HandlerFunc(userHandlers.PutUserHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusInternalServerError {
-		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusBadRequest)
+		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusInternalServerError)
 	}
 	expected = `{"message":"An error has occured in our server"}`
 	if rr.Body.String() != expected {
@@ -615,7 +615,7 @@ func TestPutUserHandler(t *testing.T) {
 	handler = http.HandlerFunc(userHandlers.PutUserHandler)
 	handler.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusBadRequest)
+		t.Errorf("PutUserHandler returned wrong status code: got %v instead of %v", status, http.StatusOK)
 	}
 	expected = `{"message":"User successfully Updated"}`
 	if rr.Body.String() != expected {
