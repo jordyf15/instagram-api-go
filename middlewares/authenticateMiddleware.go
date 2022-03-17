@@ -1,7 +1,9 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"fmt"
+	"instagram-go/domain"
 	"net/http"
 	"strings"
 
@@ -28,8 +30,15 @@ func (am *AuthenticateMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if token != nil && err == nil {
 		am.handler.ServeHTTP(w, r)
 	} else {
+		response := domain.NewMessage(err.Error())
+		responseBytes, errMarshal := json.Marshal(response)
+		if errMarshal != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(errMarshal.Error()))
+			return
+		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(err.Error()))
+		w.Write(responseBytes)
 	}
 }
 

@@ -3,10 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"instagram-go/handlers"
+	commentHttp "instagram-go/comment/delivery/http"
+	commentRepo "instagram-go/comment/repository/mongodb"
+	commentUsecase "instagram-go/comment/usecase"
+	"instagram-go/domain"
+	likeHttp "instagram-go/like/delivery/http"
+	likeRepo "instagram-go/like/repository/mongodb"
+	likeUsecase "instagram-go/like/usecase"
 	"instagram-go/middlewares"
-	"instagram-go/services"
-
+	postHttp "instagram-go/post/delivery/http"
+	postRepo "instagram-go/post/repository/mongodb"
+	postUsecase "instagram-go/post/usecase"
+	userHttp "instagram-go/user/delivery/http"
+	userRepo "instagram-go/user/repository/mongodb"
+	userUsecase "instagram-go/user/usecase"
 	"net/http"
 	"strings"
 
@@ -27,55 +37,53 @@ func main() {
 	likesCollection := client.Database("instagram").Collection("likes")
 	commentsCollection := client.Database("instagram").Collection("comments")
 
-	userCollectionQuery := services.NewUserCollectionQuery(usersCollection)
-	userService := services.NewUserService(userCollectionQuery)
-	userHandlers := handlers.NewUserHandlers(userService, nil, nil)
+	userRepository := userRepo.NewMongodbUserRepository(usersCollection)
+	postRepository := postRepo.NewMongodbPostRepository(postsCollection)
+	likeRepository := likeRepo.NewMongodbLikeRepository(likesCollection)
+	commentRepository := commentRepo.NewMongodbCommentRepository(commentsCollection)
 
-	authenticationVerification := services.NewAuthenticationVerification()
-	authenticationQuery := services.NewAuthenticationQuery(usersCollection)
-	authenticationService := services.NewAuthenticationService(authenticationQuery, authenticationVerification)
-	authenticationHandlers := handlers.NewAuthenticationHandler(authenticationService)
+	authenticationHelper := domain.NewAuthenticationHelper()
+	fileOsHelper := domain.NewFileOsHelper()
+	headerHelper := domain.NewHeaderHelper()
 
-	postCollectionQuery := services.NewPostCollectionQuery(postsCollection, likesCollection)
-	postService := services.NewPostService(postCollectionQuery)
-	postHandlers := handlers.NewPostHandlers(postService, nil, nil)
+	userUseCase := userUsecase.NewUserUsecase(userRepository, authenticationHelper, headerHelper, fileOsHelper)
+	postUsecase := postUsecase.NewPostUseCase(postRepository, likeRepository, headerHelper, fileOsHelper)
+	likeUsecase := likeUsecase.NewLikeUsecase(likeRepository, postRepository, commentRepository, headerHelper)
+	commentUsecase := commentUsecase.NewCommentUsecase(commentRepository, postRepository, likeRepository, headerHelper)
 
-	likeCollectionQuery := services.NewLikeCollectionQuery(likesCollection)
-	likeService := services.NewLikeService(likeCollectionQuery)
-
-	commentCollectionQuery := services.NewCommentCollectionQuery(commentsCollection, likesCollection)
-	commentService := services.NewCommentService(commentCollectionQuery)
-	commentHandlers := handlers.NewCommentHandlers(commentService, postService, nil)
-
-	likeHandlers := handlers.NewLikeHandlers(likeService, postService, commentService, nil)
+	postHandler := postHttp.NewPostHandler(postUsecase)
+	userHandler := userHttp.NewUserHandler(userUseCase)
+	likeHandler := likeHttp.NewLikeHandler(likeUsecase)
+	commentHandler := commentHttp.NewCommentHandler(commentUsecase)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/users", userHandlers.PostUserHandler)
-	mux.HandleFunc("/authentications", authenticationHandlers.PostAuthenticationHandler)
-	mux.HandleFunc("/users/", userHandlers.PutUserHandler)
-	mux.HandleFunc("/posts", postHandlers.Posts)
+	mux.HandleFunc("/users", userHandler.PostUser)
+	mux.HandleFunc("/authentications", userHandler.AuthenticateUser)
+	mux.HandleFunc("/users/", userHandler.PutUser)
+	mux.HandleFunc("/posts", postHandler.Posts)
 	mux.HandleFunc("/posts/", func(w http.ResponseWriter, r *http.Request) {
 		urlParts := strings.Split(r.URL.String(), "/")
 		if len(urlParts) == 3 {
-			postHandlers.Post(w, r)
+			postHandler.Post(w, r)
 		} else if len(urlParts) == 4 {
 			if urlParts[3] == "likes" && r.Method == "POST" {
-				likeHandlers.PostPostLikeHandler(w, r)
+				likeHandler.PostLikePost(w, r)
 			} else if urlParts[3] == "comments" {
-				commentHandlers.Comments(w, r)
+				commentHandler.Comments(w, r)
 			}
 		} else if len(urlParts) == 5 {
 			if urlParts[3] == "likes" && r.Method == "DELETE" {
-				likeHandlers.DeletePostLikeHandler(w, r)
+				likeHandler.DeleteLikePost(w, r)
 			} else if urlParts[3] == "comments" {
-				commentHandlers.Comment(w, r)
+				commentHandler.Comment(w, r)
 			}
 		} else if len(urlParts) == 6 && r.Method == "POST" && urlParts[3] == "comments" {
-			likeHandlers.PostCommentLikeHandler(w, r)
+			likeHandler.PostCommentLike(w, r)
 		} else if len(urlParts) == 7 && r.Method == "DELETE" {
-			likeHandlers.DeleteCommentLikeHandler(w, r)
+			likeHandler.DeleteCommentLike(w, r)
 		}
 	})
+
 	wrappedMux := middlewares.NewAuthenticateMiddleware(mux)
 	err := http.ListenAndServe(":8000", wrappedMux)
 	if err != nil {

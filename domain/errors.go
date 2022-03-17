@@ -1,0 +1,30 @@
+package domain
+
+import "errors"
+
+var (
+	ErrPasswordWrong              = errors.New("password is wrong")
+	ErrInternalServerError        = errors.New("an error has occured in our server")
+	ErrInvalidProfilePicture      = errors.New("invalid profile picture file type")
+	ErrUnauthorizedUserUpdate     = errors.New("user is not authorized to update this user")
+	ErrUserNotFound               = errors.New("User does not exist")
+	ErrUsernameConflict           = errors.New("username already exist")
+	ErrMissingEmailInput          = errors.New("email must not be empty")
+	ErrMissingFullNameInput       = errors.New("full name must not be empty")
+	ErrMissingUsernameInput       = errors.New("username must not be empty")
+	ErrMissingPasswordInput       = errors.New("password must not be empty")
+	ErrMissingVisualMediasInput   = errors.New("visual medias must not be empty")
+	ErrUnsupportedVisualMediaType = errors.New("uploaded visual medias type is not supported")
+	ErrMissingCaptionInput        = errors.New("caption must not be empty")
+	ErrPostNotFound               = errors.New("post does not exist")
+	ErrUnauthorizedPostUpdate     = errors.New("user is not authorized to update this post")
+	ErrUnauthorizedPostDelete     = errors.New("user is not authorized to delete this post")
+	ErrPostLikeConflict           = errors.New("user have already liked this post")
+	ErrLikeNotFound               = errors.New("like does not exist")
+	ErrUnauthorizedLikeDelete     = errors.New("user is not authorized to delete this like")
+	ErrCommentNotFound            = errors.New("comment does not exist")
+	ErrCommentLikeConflict        = errors.New("user have already liked this comment")
+	ErrMissingCommentInput        = errors.New("comment must not be empty")
+	ErrUnauthorizedCommentUpdate  = errors.New("user is not authorized to update this comment")
+	ErrUnauthorizedCommentDelete  = errors.New("user is not authorized to delete this comment")
+)
