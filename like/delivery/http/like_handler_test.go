@@ -44,7 +44,7 @@ func (plps *PostLikePostSuite) TestInsertPostLikeError() {
 	handler := http.HandlerFunc(likeHandler.PostLikePost)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(plps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(plps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(plps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -57,7 +57,7 @@ func (plps *PostLikePostSuite) TestPostLikePostSuccessful() {
 	handler := http.HandlerFunc(likeHandler.PostLikePost)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(plps.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %s but got %s", http.StatusCreated, rr.Code)
+	assert.Equalf(plps.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
 }
 
 type DeleteLikePostSuite struct {
@@ -76,7 +76,7 @@ func (dlps *DeleteLikePostSuite) TestDeletePostLikeError() {
 	handler := http.HandlerFunc(likeHandler.DeleteLikePost)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dlps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(dlps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(dlps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -88,7 +88,7 @@ func (dlps *DeleteLikePostSuite) TestDeleteLikePostSuccessful() {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(likeHandler.DeleteLikePost)
 	handler.ServeHTTP(rr, req)
-	assert.Equalf(dlps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(dlps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 }
 
 type PostCommentLikeSuite struct {
@@ -108,7 +108,7 @@ func (pcls *PostCommentLikeSuite) TestInsertCommentLikeError() {
 	handler := http.HandlerFunc(likeHandler.PostCommentLike)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcls.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(pcls.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(pcls.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -121,7 +121,7 @@ func (pcls *PostCommentLikeSuite) TestPostCommentLikeSuccessful() {
 	handler := http.HandlerFunc(likeHandler.PostCommentLike)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcls.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %s but got %s", http.StatusCreated, rr.Code)
+	assert.Equalf(pcls.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
 }
 
 type DeleteCommentLikeSuite struct {
@@ -141,7 +141,7 @@ func (dcls *DeleteCommentLikeSuite) TestDeleteCommentLikeError() {
 	handler := http.HandlerFunc(likeHandler.DeleteCommentLike)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dcls.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(dcls.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(dcls.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -154,5 +154,5 @@ func (dcls *DeleteCommentLikeSuite) TestDeleteCommentLikeSuccessful() {
 	handler := http.HandlerFunc(likeHandler.DeleteCommentLike)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dcls.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(dcls.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 }

@@ -53,7 +53,7 @@ func (pps *PostPostSuite) TestVisualMediaNotProvided() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingVisualMediasInput.Error() + `"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -72,7 +72,7 @@ func (pps *PostPostSuite) TestInsupportedVisualMediaTypeProvided() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrUnsupportedVisualMediaType.Error() + `"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -100,7 +100,7 @@ func (pps *PostPostSuite) TestCaptionNotProvided() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingCaptionInput.Error() + `"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -131,7 +131,7 @@ func (pps *PostPostSuite) TestInsertPostError() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(pps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -162,7 +162,7 @@ func (pps *PostPostSuite) TestPostPostSuccessful() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %s but got %s", http.StatusCreated, rr.Code)
+	assert.Equalf(pps.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
 	expectedBody := `{"message":"Post successfully Created"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -184,7 +184,7 @@ func (gps *GetPostsSuite) TestFindPostError() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(gps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(gps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(gps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -197,7 +197,7 @@ func (gps *GetPostsSuite) TestGetPostsSuccessful() {
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(gps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(gps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 }
 
 type PutPostSuite struct {
@@ -220,7 +220,7 @@ func (pps *PutPostSuite) TestMissingCaption() {
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingCaptionInput.Error() + `"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -236,7 +236,7 @@ func (pps *PutPostSuite) TestUpdatePostError() {
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(pps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -252,7 +252,7 @@ func (pps *PutPostSuite) TestPutPostSuccessful() {
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(pps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"Post successfully Updated"}`
 	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -275,7 +275,7 @@ func (dps *DeletePostSuite) TestDeletePostError() {
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(dps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(dps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -289,7 +289,7 @@ func (dps *DeletePostSuite) TestDeletePostSuccessful() {
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(dps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"Post successfully Deleted"}`
 	assert.Equalf(dps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }

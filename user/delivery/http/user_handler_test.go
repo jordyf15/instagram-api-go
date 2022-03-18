@@ -53,7 +53,7 @@ func (pus *PostUserSuite) TestEmailNotProvided() {
 	handler := http.HandlerFunc(userHandler.PostUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"email must not be empty"}`
 	assert.Equalf(pus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -71,7 +71,7 @@ func (pus *PostUserSuite) TestFullnameIsNotProvided() {
 	handler := http.HandlerFunc(userHandler.PostUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"full name must not be empty"}`
 	assert.Equalf(pus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -89,7 +89,7 @@ func (pus *PostUserSuite) TestUsernameIsNotProvided() {
 	handler := http.HandlerFunc(userHandler.PostUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"username must not be empty"}`
 	assert.Equalf(pus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -107,7 +107,7 @@ func (pus *PostUserSuite) TestPasswordIsNotProvided() {
 	handler := http.HandlerFunc(userHandler.PostUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"password must not be empty"}`
 	assert.Equalf(pus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -126,7 +126,7 @@ func (pus *PostUserSuite) TestInsertUserError() {
 	handler := http.HandlerFunc(userHandler.PostUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(pus.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"an error has occured in our server"}`
 	assert.Equalf(pus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -145,7 +145,7 @@ func (pus *PostUserSuite) PostUserSuccessful() {
 	handler := http.HandlerFunc(userHandler.PostUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %s but got %s", http.StatusCreated, rr.Code)
+	assert.Equalf(pus.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
 	expectedBody := `{"message":"User successfully registered"}`
 	assert.Equalf(pus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -181,7 +181,7 @@ func (pus *PutUserSuite) TestInvalidProfilePicture() {
 	handler := http.HandlerFunc(userHandler.PutUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(pus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedMessage := `{"message":"` + domain.ErrInvalidProfilePicture.Error() + `"}`
 	assert.Equalf(pus.T(), expectedMessage, rr.Body.String(), "Should have responded with body %s but got %s", expectedMessage, rr.Body.String())
 }
@@ -206,7 +206,7 @@ func (pus *PutUserSuite) TestUpdateUserError() {
 	handler := http.HandlerFunc(userHandler.PutUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(pus.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedMessage := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(pus.T(), expectedMessage, rr.Body.String(), "Should have responded with body %s but got %s", expectedMessage, rr.Body.String())
 }
@@ -231,7 +231,7 @@ func (pus *PutUserSuite) TestPutUserSuccessful() {
 	handler := http.HandlerFunc(userHandler.PutUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pus.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(pus.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedMessage := `{"message":"User successfully Updated"}`
 	assert.Equalf(pus.T(), expectedMessage, rr.Body.String(), "Should have responded with body %s but got %s", expectedMessage, rr.Body.String())
 }
@@ -256,7 +256,7 @@ func (aus *AuthenticateUserSuite) TestUsernameNotProvided() {
 	handler := http.HandlerFunc(userHandler.AuthenticateUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(aus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(aus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"username must not be empty"}`
 	assert.Equalf(aus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -272,7 +272,7 @@ func (aus *AuthenticateUserSuite) TestPasswordNotProvided() {
 	handler := http.HandlerFunc(userHandler.AuthenticateUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(aus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %s but got %s", http.StatusBadRequest, rr.Code)
+	assert.Equalf(aus.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"password must not be empty"}`
 	assert.Equalf(aus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -289,7 +289,7 @@ func (aus *AuthenticateUserSuite) TestVerifyCredentialError() {
 	handler := http.HandlerFunc(userHandler.AuthenticateUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(aus.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %s but got %s", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(aus.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
 	assert.Equalf(aus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
@@ -306,7 +306,7 @@ func (aus *AuthenticateUserSuite) TestAuthenticateUserSuccessful() {
 	handler := http.HandlerFunc(userHandler.AuthenticateUser)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(aus.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(aus.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"User successfully authenticated","data":{"access_token":"token"}}`
 	assert.Equalf(aus.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
