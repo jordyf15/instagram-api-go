@@ -2,6 +2,7 @@ package domain
 
 import (
 	"mime/multipart"
+	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -42,4 +43,9 @@ type PostRepository interface {
 	FindOnePost(string) (*Post, error)
 	UpdatePost(string, string) error
 	DeletePost(string) error
+}
+
+type PostHandler interface {
+	Posts(http.ResponseWriter, *http.Request)
+	Post(http.ResponseWriter, *http.Request)
 }

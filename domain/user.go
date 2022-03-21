@@ -2,6 +2,7 @@ package domain
 
 import (
 	"mime/multipart"
+	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -51,4 +52,10 @@ type UserRepository interface {
 	UpdateUser(*User) error
 	FindUser(interface{}) (*[]bson.M, error)
 	FindOneUser(filter interface{}) (*User, error)
+}
+
+type UserHandler interface {
+	PostUser(http.ResponseWriter, *http.Request)
+	PutUser(http.ResponseWriter, *http.Request)
+	AuthenticateUser(http.ResponseWriter, *http.Request)
 }

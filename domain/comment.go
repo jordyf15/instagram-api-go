@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"net/http"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,4 +42,9 @@ type CommentRepository interface {
 	FindOneComment(string) (*Comment, error)
 	UpdateComment(string, string) error
 	DeleteComment(string) error
+}
+
+type CommentHandler interface {
+	Comments(http.ResponseWriter, *http.Request)
+	Comment(http.ResponseWriter, *http.Request)
 }
