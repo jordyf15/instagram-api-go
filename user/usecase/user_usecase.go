@@ -23,7 +23,7 @@ type userUsecase struct {
 	authenticationHelper domain.IAuthenticationHelper
 }
 
-func NewUserUsecase(userRepository domain.UserRepository, authenticationHelper domain.IAuthenticationHelper, headerHelper domain.IHeaderHelper, fileOsHelper domain.IFileOsHelper) *userUsecase {
+func NewUserUsecase(userRepository domain.UserRepository, authenticationHelper domain.IAuthenticationHelper, headerHelper domain.IHeaderHelper, fileOsHelper domain.IFileOsHelper) domain.UserUsecase {
 	return &userUsecase{
 		userRepository:       userRepository,
 		headerHelper:         headerHelper,

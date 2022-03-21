@@ -13,7 +13,7 @@ type mongodbLikeRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongodbLikeRepository(collection *mongo.Collection) *mongodbLikeRepository {
+func NewMongodbLikeRepository(collection *mongo.Collection) domain.LikeRepository {
 	return &mongodbLikeRepository{
 		collection: collection,
 	}

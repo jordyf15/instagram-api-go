@@ -24,7 +24,7 @@ type postUsecase struct {
 	sync.Mutex
 }
 
-func NewPostUseCase(postRepository domain.PostRepository, likeRepository domain.LikeRepository, headerHelper domain.IHeaderHelper, fileOsHelper domain.IFileOsHelper) *postUsecase {
+func NewPostUseCase(postRepository domain.PostRepository, likeRepository domain.LikeRepository, headerHelper domain.IHeaderHelper, fileOsHelper domain.IFileOsHelper) domain.PostUsecase {
 	return &postUsecase{
 		postRepository: postRepository,
 		likeRepository: likeRepository,

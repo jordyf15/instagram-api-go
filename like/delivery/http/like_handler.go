@@ -11,7 +11,7 @@ type LikeHandler struct {
 	likeUsecase domain.LikeUsecase
 }
 
-func NewLikeHandler(likeUsecase domain.LikeUsecase) *LikeHandler {
+func NewLikeHandler(likeUsecase domain.LikeUsecase) domain.LikeHandler {
 	return &LikeHandler{
 		likeUsecase: likeUsecase,
 	}

@@ -16,7 +16,7 @@ type likeUsecase struct {
 	commentRepository domain.CommentRepository
 }
 
-func NewLikeUsecase(likeRepository domain.LikeRepository, postRepository domain.PostRepository, commentRepository domain.CommentRepository, headerHelper domain.IHeaderHelper) *likeUsecase {
+func NewLikeUsecase(likeRepository domain.LikeRepository, postRepository domain.PostRepository, commentRepository domain.CommentRepository, headerHelper domain.IHeaderHelper) domain.LikeUsecase {
 	return &likeUsecase{
 		likeRepository:    likeRepository,
 		postRepository:    postRepository,

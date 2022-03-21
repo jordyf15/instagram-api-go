@@ -13,7 +13,7 @@ type mongodbPostRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongodbPostRepository(collection *mongo.Collection) *mongodbPostRepository {
+func NewMongodbPostRepository(collection *mongo.Collection) domain.PostRepository {
 	return &mongodbPostRepository{
 		collection: collection,
 	}

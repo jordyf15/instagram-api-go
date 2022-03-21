@@ -12,7 +12,7 @@ type PostHandler struct {
 	postUsecase domain.PostUsecase
 }
 
-func NewPostHandler(postUsecase domain.PostUsecase) *PostHandler {
+func NewPostHandler(postUsecase domain.PostUsecase) domain.PostHandler {
 	return &PostHandler{
 		postUsecase: postUsecase,
 	}

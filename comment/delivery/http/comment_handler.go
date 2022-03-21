@@ -12,7 +12,7 @@ type CommentHandler struct {
 	commentUsecase domain.CommentUsecase
 }
 
-func NewCommentHandler(commentUsecase domain.CommentUsecase) *CommentHandler {
+func NewCommentHandler(commentUsecase domain.CommentUsecase) domain.CommentHandler {
 	return &CommentHandler{
 		commentUsecase: commentUsecase,
 	}

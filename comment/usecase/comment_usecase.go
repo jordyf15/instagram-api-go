@@ -19,7 +19,7 @@ type commentUsecase struct {
 	headerHelper      domain.IHeaderHelper
 }
 
-func NewCommentUsecase(commentRepository domain.CommentRepository, postRepository domain.PostRepository, likeRepository domain.LikeRepository, headerHelper domain.IHeaderHelper) *commentUsecase {
+func NewCommentUsecase(commentRepository domain.CommentRepository, postRepository domain.PostRepository, likeRepository domain.LikeRepository, headerHelper domain.IHeaderHelper) domain.CommentUsecase {
 	return &commentUsecase{
 		commentRepository: commentRepository,
 		postRepository:    postRepository,

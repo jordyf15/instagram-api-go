@@ -13,7 +13,7 @@ type mongodbCommentRepository struct {
 	collection *mongo.Collection
 }
 
-func NewMongodbCommentRepository(collection *mongo.Collection) *mongodbCommentRepository {
+func NewMongodbCommentRepository(collection *mongo.Collection) domain.CommentRepository {
 	return &mongodbCommentRepository{
 		collection: collection,
 	}
