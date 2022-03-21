@@ -19,65 +19,55 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func TestPostPostSuite(t *testing.T) {
-	suite.Run(t, new(PostPostSuite))
+func TestPostHandlerSuite(t *testing.T) {
+	suite.Run(t, new(PostHandlerSuite))
 }
 
-func TestGetPostsSuite(t *testing.T) {
-	suite.Run(t, new(GetPostsSuite))
-}
-func TestPutPostSuite(t *testing.T) {
-	suite.Run(t, new(PutPostSuite))
-}
-func TestDeletePostSuite(t *testing.T) {
-	suite.Run(t, new(DeletePostSuite))
-}
-
-type PostPostSuite struct {
+type PostHandlerSuite struct {
 	suite.Suite
 	postUsecase *mocks.PostUsecase
 }
 
-func (pps *PostPostSuite) SetupTest() {
-	pps.postUsecase = new(mocks.PostUsecase)
+func (ph *PostHandlerSuite) SetupTest() {
+	ph.postUsecase = new(mocks.PostUsecase)
 }
 
-func (pps *PostPostSuite) TestVisualMediaNotProvided() {
+func (ph *PostHandlerSuite) TestPostPostVisualMediaNotProvided() {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	writer.Close()
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
+	assert.Equalf(ph.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingVisualMediasInput.Error() + `"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pps *PostPostSuite) TestInsupportedVisualMediaTypeProvided() {
+func (ph *PostHandlerSuite) TestPostPostInsupportedVisualMediaTypeProvided() {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	fw, _ := writer.CreateFormFile("visual_medias", "bmp.bmp")
 	file, _ := os.Open("./test_visual_medias/bmp.bmp")
 	_, _ = io.Copy(fw, file)
 	writer.Close()
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
+	assert.Equalf(ph.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrUnsupportedVisualMediaType.Error() + `"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pps *PostPostSuite) TestCaptionNotProvided() {
+func (ph *PostHandlerSuite) TestPostPostCaptionNotProvided() {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	fw, _ := writer.CreateFormFile("visual_medias", "gif.gif")
@@ -93,19 +83,19 @@ func (pps *PostPostSuite) TestCaptionNotProvided() {
 	file, _ = os.Open("./test_visual_medias/tiff.tiff")
 	_, _ = io.Copy(fw, file)
 	writer.Close()
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
+	assert.Equalf(ph.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingCaptionInput.Error() + `"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pps *PostPostSuite) TestInsertPostError() {
+func (ph *PostHandlerSuite) TestPostPostInsertPostError() {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	fw, _ := writer.CreateFormFile("visual_medias", "gif.gif")
@@ -123,20 +113,20 @@ func (pps *PostPostSuite) TestInsertPostError() {
 	fw, _ = writer.CreateFormField("caption")
 	_, _ = io.Copy(fw, strings.NewReader("a new caption"))
 	writer.Close()
-	pps.postUsecase.On("InsertPost", mock.Anything, mock.Anything, mock.Anything).Return(domain.ErrInternalServerError)
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	ph.postUsecase.On("InsertPost", mock.AnythingOfType("*domain.Post"), mock.AnythingOfType("string"), mock.AnythingOfType("[]*multipart.FileHeader")).Return(domain.ErrInternalServerError)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ph.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pps *PostPostSuite) TestPostPostSuccessful() {
+func (ph *PostHandlerSuite) TestPostPostSuccessful() {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	fw, _ := writer.CreateFormFile("visual_medias", "gif.gif")
@@ -154,142 +144,114 @@ func (pps *PostPostSuite) TestPostPostSuccessful() {
 	fw, _ = writer.CreateFormField("caption")
 	_, _ = io.Copy(fw, strings.NewReader("a new caption"))
 	writer.Close()
-	pps.postUsecase.On("InsertPost", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	ph.postUsecase.On("InsertPost", mock.AnythingOfType("*domain.Post"), mock.AnythingOfType("string"), mock.Anything).Return(nil)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	req, _ := http.NewRequest("POST", "/posts", bytes.NewReader(body.Bytes()))
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
+	assert.Equalf(ph.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
 	expectedBody := `{"message":"Post successfully Created"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-type GetPostsSuite struct {
-	suite.Suite
-	postUsecase *mocks.PostUsecase
-}
-
-func (gps *GetPostsSuite) SetupTest() {
-	gps.postUsecase = new(mocks.PostUsecase)
-}
-
-func (gps *GetPostsSuite) TestFindPostError() {
+func (ph *PostHandlerSuite) TestGetPostsFindPostError() {
 	req, _ := http.NewRequest("GET", "/posts", nil)
 	rr := httptest.NewRecorder()
-	gps.postUsecase.On("FindPosts").Return(nil, domain.ErrInternalServerError)
-	postHandler := postHttp.NewPostHandler(gps.postUsecase)
+	ph.postUsecase.On("FindPosts").Return(nil, domain.ErrInternalServerError)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(gps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ph.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(gps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (gps *GetPostsSuite) TestGetPostsSuccessful() {
+func (ph *PostHandlerSuite) TestGetPostsSuccessful() {
 	req, _ := http.NewRequest("GET", "/posts", nil)
 	rr := httptest.NewRecorder()
-	gps.postUsecase.On("FindPosts").Return(&[]domain.Post{}, nil)
-	postHandler := postHttp.NewPostHandler(gps.postUsecase)
+	ph.postUsecase.On("FindPosts").Return(&[]domain.Post{}, nil)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Posts)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(gps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
+	assert.Equalf(ph.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 }
-
-type PutPostSuite struct {
-	suite.Suite
-	postUsecase *mocks.PostUsecase
-}
-
-func (pps *PutPostSuite) SetupTest() {
-	pps.postUsecase = new(mocks.PostUsecase)
-}
-
-func (pps *PutPostSuite) TestMissingCaption() {
+func (ph *PostHandlerSuite) TestPutPostMissingCaption() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"caption": "",
 	})
 	req, _ := http.NewRequest("PUT", "/posts/postid1", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
+	assert.Equalf(ph.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingCaptionInput.Error() + `"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pps *PutPostSuite) TestUpdatePostError() {
+func (ph *PostHandlerSuite) TestPutPostUpdatePostError() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"caption": "caption1",
 	})
 	req, _ := http.NewRequest("PUT", "/posts/postid1", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
-	pps.postUsecase.On("UpdatePost", mock.Anything, mock.Anything, mock.Anything).Return(domain.ErrInternalServerError)
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	ph.postUsecase.On("UpdatePost", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(domain.ErrInternalServerError)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ph.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pps *PutPostSuite) TestPutPostSuccessful() {
+func (ph *PostHandlerSuite) TestPutPostSuccessful() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"caption": "caption1",
 	})
 	req, _ := http.NewRequest("PUT", "/posts/postid1", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
-	pps.postUsecase.On("UpdatePost", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	postHandler := postHttp.NewPostHandler(pps.postUsecase)
+	ph.postUsecase.On("UpdatePost", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
+	assert.Equalf(ph.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"Post successfully Updated"}`
-	assert.Equalf(pps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-type DeletePostSuite struct {
-	suite.Suite
-	postUsecase *mocks.PostUsecase
-}
-
-func (dps *DeletePostSuite) SetupTest() {
-	dps.postUsecase = new(mocks.PostUsecase)
-}
-
-func (dps *DeletePostSuite) TestDeletePostError() {
+func (ph *PostHandlerSuite) TestDeletePostDeletePostError() {
 	req, _ := http.NewRequest("DELETE", "/posts/postid1", nil)
 	rr := httptest.NewRecorder()
 
-	dps.postUsecase.On("DeletePost", mock.Anything, mock.Anything).Return(domain.ErrInternalServerError)
-	postHandler := postHttp.NewPostHandler(dps.postUsecase)
+	ph.postUsecase.On("DeletePost", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(domain.ErrInternalServerError)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dps.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ph.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(dps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (dps *DeletePostSuite) TestDeletePostSuccessful() {
+func (ph *PostHandlerSuite) TestDeletePostSuccessful() {
 	req, _ := http.NewRequest("DELETE", "/posts/postid1", nil)
 	rr := httptest.NewRecorder()
 
-	dps.postUsecase.On("DeletePost", mock.Anything, mock.Anything).Return(nil)
-	postHandler := postHttp.NewPostHandler(dps.postUsecase)
+	ph.postUsecase.On("DeletePost", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
+	postHandler := postHttp.NewPostHandler(ph.postUsecase)
 	handler := http.HandlerFunc(postHandler.Post)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dps.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
+	assert.Equalf(ph.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"Post successfully Deleted"}`
-	assert.Equalf(dps.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ph.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }

@@ -14,18 +14,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func TestInsertUser(t *testing.T) {
-	suite.Run(t, new(InsertUserSuite))
-}
-func TestUpdateUser(t *testing.T) {
-	suite.Run(t, new(UpdateUserSuite))
+func TestUserusecase(t *testing.T) {
+	suite.Run(t, new(UserUsecaseSuite))
 }
 
-func TestVerifyCredential(t *testing.T) {
-	suite.Run(t, new(VerifyCredentialSuite))
-}
-
-type InsertUserSuite struct {
+type UserUsecaseSuite struct {
 	suite.Suite
 	mockUserRepo             *mocks.UserRepository
 	mockFileOsHelper         *mocks.IFileOsHelper
@@ -33,27 +26,27 @@ type InsertUserSuite struct {
 	mockAuthenticationHelper *mocks.IAuthenticationHelper
 }
 
-func (ius *InsertUserSuite) SetupTest() {
-	ius.mockUserRepo = new(mocks.UserRepository)
-	ius.mockFileOsHelper = new(mocks.IFileOsHelper)
-	ius.mockHeaderHelper = new(mocks.IHeaderHelper)
-	ius.mockAuthenticationHelper = new(mocks.IAuthenticationHelper)
+func (us *UserUsecaseSuite) SetupTest() {
+	us.mockUserRepo = new(mocks.UserRepository)
+	us.mockFileOsHelper = new(mocks.IFileOsHelper)
+	us.mockHeaderHelper = new(mocks.IHeaderHelper)
+	us.mockAuthenticationHelper = new(mocks.IAuthenticationHelper)
 }
 
-func (ius *InsertUserSuite) TestFindUserError() {
+func (us *UserUsecaseSuite) TestInsertUserFindUserError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	ius.mockUserRepo.On("FindUser", mock.Anything).Return(nil, errors.New("FindUser return error"))
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(nil, errors.New("FindUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(ius.mockUserRepo, ius.mockAuthenticationHelper, ius.mockHeaderHelper, ius.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	result := userUsecase.InsertUser(mockUser)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ius.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (ius *InsertUserSuite) TestUserNameConflict() {
+func (us *UserUsecaseSuite) TestInsertUserUserNameConflict() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	ius.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{{
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{{
 		"_id":                  "user1",
 		"username":             "username1",
 		"fullname":             "fullname1",
@@ -62,103 +55,89 @@ func (ius *InsertUserSuite) TestUserNameConflict() {
 		"profile_pictures_url": []string{},
 	}}, nil)
 
-	userUsecase := usecase.NewUserUsecase(ius.mockUserRepo, ius.mockAuthenticationHelper, ius.mockHeaderHelper, ius.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	result := userUsecase.InsertUser(mockUser)
 
 	expectedError := domain.ErrUsernameConflict.Error()
-	assert.EqualErrorf(ius.T(), result, expectedError, "should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "should have return %s but got %s", expectedError, result.Error())
 }
 
-func (ius *InsertUserSuite) TestInsertUserError() {
+func (us *UserUsecaseSuite) TestInsertUserError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	ius.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{}, nil)
-	ius.mockUserRepo.On("InsertUser", mock.Anything).Return(errors.New("InsertUser return error"))
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
+	us.mockUserRepo.On("InsertUser", mock.AnythingOfType("*domain.User")).Return(errors.New("InsertUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(ius.mockUserRepo, ius.mockAuthenticationHelper, ius.mockHeaderHelper, ius.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	result := userUsecase.InsertUser(mockUser)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ius.T(), result, expectedError, "should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "should have return %s but got %s", expectedError, result.Error())
 }
-func (ius *InsertUserSuite) TestSuccessfulInsert() {
-	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	ius.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{}, nil)
-	ius.mockUserRepo.On("InsertUser", mock.Anything).Return(nil)
 
-	userUsecase := usecase.NewUserUsecase(ius.mockUserRepo, ius.mockAuthenticationHelper, ius.mockHeaderHelper, ius.mockFileOsHelper)
+func (us *UserUsecaseSuite) TestInsertUserSuccessful() {
+	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
+	us.mockUserRepo.On("InsertUser", mock.AnythingOfType("*domain.User")).Return(nil)
+
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	result := userUsecase.InsertUser(mockUser)
 
-	assert.NoErrorf(ius.T(), result, "should have not returned error but got %s", result)
+	assert.NoErrorf(us.T(), result, "should have not returned error but got %s", result)
 }
 
-type UpdateUserSuite struct {
-	suite.Suite
-	mockUserRepo             *mocks.UserRepository
-	mockFileOsHelper         *mocks.IFileOsHelper
-	mockHeaderHelper         *mocks.IHeaderHelper
-	mockAuthenticationHelper *mocks.IAuthenticationHelper
-}
-
-func (uus *UpdateUserSuite) SetupTest() {
-	uus.mockUserRepo = new(mocks.UserRepository)
-	uus.mockFileOsHelper = new(mocks.IFileOsHelper)
-	uus.mockHeaderHelper = new(mocks.IHeaderHelper)
-	uus.mockAuthenticationHelper = new(mocks.IAuthenticationHelper)
-}
-
-func (uus *UpdateUserSuite) TestMkDirAllError() {
+func (us *UserUsecaseSuite) TestUpdateUserMkDirAllError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(errors.New("MkDirAll return error"))
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(errors.New("MkDirAll return error"))
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "test", nil)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestGetUserTokenError() {
+func (us *UserUsecaseSuite) TestUpdateUserGetUserTokenError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("user1id", errors.New("GetUserIdFromToken return error"))
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("user1id", errors.New("GetUserIdFromToken return error"))
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "test", nil)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestFindUserError() {
+func (us *UserUsecaseSuite) TestUpdateUserFindUserError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("user1id", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(nil, errors.New("FindUser return error"))
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("user1id", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(nil, errors.New("FindUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "test", nil)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestUserNotFoundError() {
+func (us *UserUsecaseSuite) TestUpdateUserUserNotFoundError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("user1id", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{}, nil)
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("user1id", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "test", nil)
 
 	expectedError := domain.ErrUserNotFound.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestUnauthorizedUserUpdateError() {
+func (us *UserUsecaseSuite) TestUpdateUserUnauthorizedUserUpdateError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid3", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid3", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":              "userid1",
 			"username":         "user1",
@@ -169,18 +148,18 @@ func (uus *UpdateUserSuite) TestUnauthorizedUserUpdateError() {
 		},
 	}, nil)
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "test", nil)
 
 	expectedError := domain.ErrUnauthorizedUserUpdate.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestResizeAndSaveFileToLocaleError() {
+func (us *UserUsecaseSuite) TestUpdateUserResizeAndSaveFileToLocaleError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":              "userid1",
 			"username":         "user1",
@@ -191,21 +170,21 @@ func (uus *UpdateUserSuite) TestResizeAndSaveFileToLocaleError() {
 		},
 	}, nil)
 	file, _ := os.Open("./test_profile_pictures/jpg.jpg")
-	uus.mockFileOsHelper.On("DecodeImage", file).Return(nil, "jpg.jpg", nil)
-	uus.mockFileOsHelper.On("ResizeAndSaveFileToLocale", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("jpg.jpg", errors.New("ResizeAndSaveFIleToLocale return error"))
+	us.mockFileOsHelper.On("DecodeImage", file).Return(nil, "jpg.jpg", nil)
+	us.mockFileOsHelper.On("ResizeAndSaveFileToLocale", mock.AnythingOfType("string"), mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return("jpg.jpg", errors.New("ResizeAndSaveFIleToLocale return error"))
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, file)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "token", file)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestDecodeImageError() {
+func (us *UserUsecaseSuite) TestUpdateUserDecodeImageError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":              "userid1",
 			"username":         "user1",
@@ -216,20 +195,20 @@ func (uus *UpdateUserSuite) TestDecodeImageError() {
 		},
 	}, nil)
 	file, _ := os.Open("./test_profile_pictures/jpg.jpg")
-	uus.mockFileOsHelper.On("DecodeImage", file).Return(nil, "jpg.jpg", errors.New("DecodeImage return error"))
+	us.mockFileOsHelper.On("DecodeImage", file).Return(nil, "jpg.jpg", errors.New("DecodeImage return error"))
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, file)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "token", file)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-func (uus *UpdateUserSuite) TestFindOneUserError() {
+func (us *UserUsecaseSuite) TestUpdateUserFindOneUserError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":              "userid1",
 			"username":         "username1",
@@ -239,43 +218,20 @@ func (uus *UpdateUserSuite) TestFindOneUserError() {
 			"profile_pictures": nil,
 		},
 	}, nil)
-	uus.mockUserRepo.On("FindOneUser", mock.Anything).Return(nil, errors.New("FindOneUser return error"))
+	us.mockUserRepo.On("FindOneUser", mock.AnythingOfType("M")).Return(nil, errors.New("FindOneUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
-
-	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
-}
-func (uus *UpdateUserSuite) TestUpdateUserError() {
-	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{
-		{
-			"_id":              "userid1",
-			"username":         "username1",
-			"full_name":        "fullname1",
-			"password":         "password1",
-			"email":            "email1@gmail.com",
-			"profile_pictures": nil,
-		},
-	}, nil)
-	foundUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockUserRepo.On("FindOneUser", mock.Anything).Return(foundUser, nil)
-	uus.mockUserRepo.On("UpdateUser", mock.Anything).Return(errors.New("UpdateUser return error"))
-
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "token", nil)
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(uus.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
-func (uus *UpdateUserSuite) TestUpdateSuccessful() {
+
+func (us *UserUsecaseSuite) TestUpdateUserError() {
 	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	uus.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	uus.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":              "userid1",
 			"username":         "username1",
@@ -286,89 +242,100 @@ func (uus *UpdateUserSuite) TestUpdateSuccessful() {
 		},
 	}, nil)
 	foundUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	uus.mockUserRepo.On("FindOneUser", mock.Anything).Return(foundUser, nil)
-	uus.mockUserRepo.On("UpdateUser", mock.Anything).Return(nil)
+	us.mockUserRepo.On("FindOneUser", mock.AnythingOfType("M")).Return(foundUser, nil)
+	us.mockUserRepo.On("UpdateUser", mock.AnythingOfType("*domain.User")).Return(errors.New("UpdateUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(uus.mockUserRepo, uus.mockAuthenticationHelper, uus.mockHeaderHelper, uus.mockFileOsHelper)
-	result := userUsecase.UpdateUser(mockUser, mock.Anything, nil)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "token", nil)
 
-	assert.NoErrorf(uus.T(), result, "should have not returned error but got %s", result)
+	expectedError := domain.ErrInternalServerError.Error()
+	assert.EqualErrorf(us.T(), result, expectedError, "Should have return %s but got %s", expectedError, result.Error())
 }
 
-type VerifyCredentialSuite struct {
-	suite.Suite
-	mockUserRepo             *mocks.UserRepository
-	mockFileOsHelper         *mocks.IFileOsHelper
-	mockHeaderHelper         *mocks.IHeaderHelper
-	mockAuthenticationHelper *mocks.IAuthenticationHelper
+func (us *UserUsecaseSuite) TestUpdateUserSuccessful() {
+	mockUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
+	us.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	us.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{
+		{
+			"_id":              "userid1",
+			"username":         "username1",
+			"full_name":        "fullname1",
+			"password":         "password1",
+			"email":            "email1@gmail.com",
+			"profile_pictures": nil,
+		},
+	}, nil)
+	foundUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
+	us.mockUserRepo.On("FindOneUser", mock.AnythingOfType("M")).Return(foundUser, nil)
+	us.mockUserRepo.On("UpdateUser", mock.AnythingOfType("*domain.User")).Return(nil)
+
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
+	result := userUsecase.UpdateUser(mockUser, "token", nil)
+
+	assert.NoErrorf(us.T(), result, "should have not returned error but got %s", result)
 }
 
-func (vcs *VerifyCredentialSuite) SetupTest() {
-	vcs.mockUserRepo = new(mocks.UserRepository)
-	vcs.mockFileOsHelper = new(mocks.IFileOsHelper)
-	vcs.mockHeaderHelper = new(mocks.IHeaderHelper)
-	vcs.mockAuthenticationHelper = new(mocks.IAuthenticationHelper)
-}
-func (vcs *VerifyCredentialSuite) TestFindUserError() {
-	vcs.mockUserRepo.On("FindUser", mock.Anything).Return(nil, errors.New("FindUser return error"))
+func (us *UserUsecaseSuite) TestVerfiyCredentialFindUserError() {
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(nil, errors.New("FindUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(vcs.mockUserRepo, vcs.mockAuthenticationHelper, vcs.mockHeaderHelper, vcs.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	_, err := userUsecase.VerifyCredential("username1", "password1")
 	expectedError := domain.ErrInternalServerError.Error()
 
-	assert.EqualErrorf(vcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(us.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (vcs *VerifyCredentialSuite) TestUserNotFoundError() {
-	vcs.mockUserRepo.On("FindUser", mock.Anything).Return(&[]bson.M{}, nil)
+func (us *UserUsecaseSuite) TestVerifyCredentialUserNotFoundError() {
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	userUsecase := usecase.NewUserUsecase(vcs.mockUserRepo, vcs.mockAuthenticationHelper, vcs.mockHeaderHelper, vcs.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	_, err := userUsecase.VerifyCredential("username1", "password1")
 	expectedError := domain.ErrUserNotFound.Error()
 
-	assert.EqualErrorf(vcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(us.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (vcs *VerifyCredentialSuite) TestFindOneUserError() {
+func (us *UserUsecaseSuite) TestVerifyCredentialFindOneUserError() {
 	foundUsers := []bson.M{
 		{"_id": "userid1", "username": "username1", "full_name": "fullname1", "password": "password1", "email": "email1@gmail.com", "profile_pictures": nil},
 	}
-	vcs.mockUserRepo.On("FindUser", mock.Anything).Return(&foundUsers, nil)
-	vcs.mockUserRepo.On("FindOneUser", mock.Anything).Return(nil, errors.New("FindOneUser return error"))
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&foundUsers, nil)
+	us.mockUserRepo.On("FindOneUser", mock.AnythingOfType("M")).Return(nil, errors.New("FindOneUser return error"))
 
-	userUsecase := usecase.NewUserUsecase(vcs.mockUserRepo, vcs.mockAuthenticationHelper, vcs.mockHeaderHelper, vcs.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	_, err := userUsecase.VerifyCredential("username1", "password1")
 	expectedError := domain.ErrInternalServerError.Error()
 
-	assert.EqualErrorf(vcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(us.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (vcs *VerifyCredentialSuite) TestCompareHashAndPasswordError() {
+func (us *UserUsecaseSuite) TestVerifyCredentialCompareHashAndPasswordError() {
 	foundUsers := []bson.M{
 		{"_id": "userid1", "username": "username1", "full_name": "fullname1", "password": "password1", "email": "email1@gmail.com", "profile_pictures": nil},
 	}
 	foundUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	vcs.mockUserRepo.On("FindUser", mock.Anything).Return(&foundUsers, nil)
-	vcs.mockUserRepo.On("FindOneUser", mock.Anything).Return(foundUser, nil)
-	vcs.mockAuthenticationHelper.On("CompareHashAndPassword", mock.Anything, mock.Anything).Return(errors.New("CompareHashAndPassword return error"))
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&foundUsers, nil)
+	us.mockUserRepo.On("FindOneUser", mock.AnythingOfType("M")).Return(foundUser, nil)
+	us.mockAuthenticationHelper.On("CompareHashAndPassword", mock.AnythingOfType("[]uint8"), mock.AnythingOfType("[]uint8")).Return(errors.New("CompareHashAndPassword return error"))
 
-	userUsecase := usecase.NewUserUsecase(vcs.mockUserRepo, vcs.mockAuthenticationHelper, vcs.mockHeaderHelper, vcs.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	_, err := userUsecase.VerifyCredential("username1", "password1")
 	expectedError := domain.ErrPasswordWrong.Error()
 
-	assert.EqualErrorf(vcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(us.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (vcs *VerifyCredentialSuite) TestVerifyCredentialSuccessful() {
+func (us *UserUsecaseSuite) TestVerifyCredentialSuccessful() {
 	foundUsers := []bson.M{
 		{"_id": "userid1", "username": "username1", "full_name": "fullname1", "password": "password1", "email": "email1@gmail.com", "profile_pictures": nil},
 	}
 	foundUser := domain.NewUser("userid1", "username1", "fullname1", "password1", "email1@gmail.com", nil)
-	vcs.mockUserRepo.On("FindUser", mock.Anything).Return(&foundUsers, nil)
-	vcs.mockUserRepo.On("FindOneUser", mock.Anything).Return(foundUser, nil)
-	vcs.mockAuthenticationHelper.On("CompareHashAndPassword", mock.Anything, mock.Anything).Return(nil)
+	us.mockUserRepo.On("FindUser", mock.AnythingOfType("M")).Return(&foundUsers, nil)
+	us.mockUserRepo.On("FindOneUser", mock.AnythingOfType("M")).Return(foundUser, nil)
+	us.mockAuthenticationHelper.On("CompareHashAndPassword", mock.AnythingOfType("[]uint8"), mock.AnythingOfType("[]uint8")).Return(nil)
 
-	userUsecase := usecase.NewUserUsecase(vcs.mockUserRepo, vcs.mockAuthenticationHelper, vcs.mockHeaderHelper, vcs.mockFileOsHelper)
+	userUsecase := usecase.NewUserUsecase(us.mockUserRepo, us.mockAuthenticationHelper, us.mockHeaderHelper, us.mockFileOsHelper)
 	_, err := userUsecase.VerifyCredential("username1", "password1")
-	assert.NoErrorf(vcs.T(), err, "should have not returned error but got %s", err)
+	assert.NoErrorf(us.T(), err, "should have not returned error but got %s", err)
 }

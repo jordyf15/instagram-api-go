@@ -15,167 +15,137 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-func TestGetCommentsSuite(t *testing.T) {
-	suite.Run(t, new(GetCommentsSuite))
+func TestCommentHandlerSuite(t *testing.T) {
+	suite.Run(t, new(CommentHandlerSuite))
 }
 
-func TestPostCommentSuite(t *testing.T) {
-	suite.Run(t, new(PostCommentSuite))
-}
-
-func TestPutCommentSuite(t *testing.T) {
-	suite.Run(t, new(PutCommentSuite))
-}
-
-func TestDeleteCommentSuite(t *testing.T) {
-	suite.Run(t, new(DeleteCommentSuite))
-}
-
-type GetCommentsSuite struct {
+type CommentHandlerSuite struct {
 	suite.Suite
 	commentUsecase *mocks.CommentUsecase
 }
 
-func (gcs *GetCommentsSuite) SetupTest() {
-	gcs.commentUsecase = new(mocks.CommentUsecase)
+func (ch *CommentHandlerSuite) SetupTest() {
+	ch.commentUsecase = new(mocks.CommentUsecase)
 }
 
-func (gcs *GetCommentsSuite) TestFindCommentsError() {
-	gcs.commentUsecase.On("FindComments", mock.Anything).Return(nil, domain.ErrInternalServerError)
-	commentHandler := commentHttp.NewCommentHandler(gcs.commentUsecase)
+func (ch *CommentHandlerSuite) TestGetCommentsFindCommentsError() {
+	ch.commentUsecase.On("FindComments", mock.AnythingOfType("string")).Return(nil, domain.ErrInternalServerError)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("GET", "/posts/postid1/comments", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comments)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(gcs.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ch.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(gcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (gcs *GetCommentsSuite) TestGetCommentsSuccessful() {
-	gcs.commentUsecase.On("FindComments", mock.Anything).Return(&[]domain.Comment{}, nil)
-	commentHandler := commentHttp.NewCommentHandler(gcs.commentUsecase)
+func (ch *CommentHandlerSuite) TestGetCommentsSuccessful() {
+	ch.commentUsecase.On("FindComments", mock.AnythingOfType("string")).Return(&[]domain.Comment{}, nil)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("GET", "/posts/postid1/comments", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comments)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(gcs.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
+	assert.Equalf(ch.T(), http.StatusOK, rr.Code, "Should have responded with http status code %s but got %s", http.StatusOK, rr.Code)
 }
 
-type PostCommentSuite struct {
-	suite.Suite
-	commentUsecase *mocks.CommentUsecase
-}
-
-func (pcs *PostCommentSuite) SetupTest() {
-	pcs.commentUsecase = new(mocks.CommentUsecase)
-}
-
-func (pcs *PostCommentSuite) TestCommentNotProvided() {
+func (ch *CommentHandlerSuite) TestPostCommentCommentNotProvided() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"comment": "",
 	})
-	commentHandler := commentHttp.NewCommentHandler(pcs.commentUsecase)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("POST", "/posts/postid1/comments", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comments)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcs.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
+	assert.Equalf(ch.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingCommentInput.Error() + `"}`
-	assert.Equalf(pcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pcs *PostCommentSuite) TestPostCommentError() {
+func (ch *CommentHandlerSuite) TestPostCommentPostCommentError() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"comment": "a new comment",
 	})
-	pcs.commentUsecase.On("PostComment", mock.Anything, mock.Anything).Return(domain.ErrInternalServerError)
-	commentHandler := commentHttp.NewCommentHandler(pcs.commentUsecase)
+	ch.commentUsecase.On("PostComment", mock.AnythingOfType("*domain.Comment"), mock.AnythingOfType("string")).Return(domain.ErrInternalServerError)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("POST", "/posts/postid1/comments", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comments)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcs.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ch.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(pcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pcs *PostCommentSuite) TestPostCommentSuccessful() {
+func (ch *CommentHandlerSuite) TestPostCommentSuccessful() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"comment": "a new comment",
 	})
 
-	pcs.commentUsecase.On("PostComment", mock.Anything, mock.Anything).Return(nil)
-	commentHandler := commentHttp.NewCommentHandler(pcs.commentUsecase)
+	ch.commentUsecase.On("PostComment", mock.AnythingOfType("*domain.Comment"), mock.AnythingOfType("string")).Return(nil)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("POST", "/posts/postid1/comments", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comments)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcs.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
+	assert.Equalf(ch.T(), http.StatusCreated, rr.Code, "Should have responded with http status code %v but got %v", http.StatusCreated, rr.Code)
 	expectedBody := `{"message":"Comment successfully Created"}`
-	assert.Equalf(pcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-type PutCommentSuite struct {
-	suite.Suite
-	commentUsecase *mocks.CommentUsecase
-}
-
-func (pcs *PutCommentSuite) SetupTest() {
-	pcs.commentUsecase = new(mocks.CommentUsecase)
-}
-
-func (pcs *PutCommentSuite) TestCommentNotProvided() {
+func (ch *CommentHandlerSuite) TestPutCommentCommentNotProvided() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"comment": "",
 	})
 
-	commentHandler := commentHttp.NewCommentHandler(pcs.commentUsecase)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("PUT", "/posts/postid1/comments/commentid1", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comment)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcs.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
+	assert.Equalf(ch.T(), http.StatusBadRequest, rr.Code, "Should have responded with http status code %v but got %v", http.StatusBadRequest, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrMissingCommentInput.Error() + `"}`
-	assert.Equalf(pcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pcs *PutCommentSuite) TestPutCommentError() {
+func (ch *CommentHandlerSuite) TestPutCommentPutCommentError() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"comment": "a new comment",
 	})
-	pcs.commentUsecase.On("PutComment", mock.Anything, mock.Anything).Return(domain.ErrInternalServerError)
-	commentHandler := commentHttp.NewCommentHandler(pcs.commentUsecase)
+	ch.commentUsecase.On("PutComment", mock.AnythingOfType("*domain.Comment"), mock.AnythingOfType("string")).Return(domain.ErrInternalServerError)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("PUT", "/posts/postid1/comments/commentid1", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comment)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcs.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ch.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(pcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (pcs *PutCommentSuite) TestPutCommentSuccessful() {
+func (ch *CommentHandlerSuite) TestPutCommentSuccessful() {
 	requestBody, _ := json.Marshal(map[string]string{
 		"comment": "a new comment",
 	})
-	pcs.commentUsecase.On("PutComment", mock.Anything, mock.Anything).Return(nil)
-	commentHandler := commentHttp.NewCommentHandler(pcs.commentUsecase)
+	ch.commentUsecase.On("PutComment", mock.AnythingOfType("*domain.Comment"), mock.AnythingOfType("string")).Return(nil)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("PUT", "/posts/postid1/comments/commentid1", bytes.NewBuffer(requestBody))
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comment)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(pcs.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
+	assert.Equalf(ch.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"Comment successfully Updated"}`
-	assert.Equalf(pcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 
 }
 
@@ -188,28 +158,28 @@ func (dcs *DeleteCommentSuite) SetupTest() {
 	dcs.commentUsecase = new(mocks.CommentUsecase)
 }
 
-func (dcs *DeleteCommentSuite) TestDeleteCommentError() {
-	dcs.commentUsecase.On("DeleteComment", mock.Anything, mock.Anything).Return(domain.ErrInternalServerError)
-	commentHandler := commentHttp.NewCommentHandler(dcs.commentUsecase)
+func (ch *CommentHandlerSuite) TestDeleteCommentDeleteCommentError() {
+	ch.commentUsecase.On("DeleteComment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(domain.ErrInternalServerError)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("DELETE", "/posts/postid1/comments/commentid1", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comment)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dcs.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
+	assert.Equalf(ch.T(), http.StatusInternalServerError, rr.Code, "Should have responded with http status code %v but got %v", http.StatusInternalServerError, rr.Code)
 	expectedBody := `{"message":"` + domain.ErrInternalServerError.Error() + `"}`
-	assert.Equalf(dcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }
 
-func (dcs *DeleteCommentSuite) TestDeleteCommentSuccessful() {
-	dcs.commentUsecase.On("DeleteComment", mock.Anything, mock.Anything).Return(nil)
-	commentHandler := commentHttp.NewCommentHandler(dcs.commentUsecase)
+func (ch *DeleteCommentSuite) TestDeleteCommentSuccessful() {
+	ch.commentUsecase.On("DeleteComment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
+	commentHandler := commentHttp.NewCommentHandler(ch.commentUsecase)
 	req, _ := http.NewRequest("DELETE", "/posts/postid1/comments/commentid1", nil)
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(commentHandler.Comment)
 	handler.ServeHTTP(rr, req)
 
-	assert.Equalf(dcs.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
+	assert.Equalf(ch.T(), http.StatusOK, rr.Code, "Should have responded with http status code %v but got %v", http.StatusOK, rr.Code)
 	expectedBody := `{"message":"Comment successfully Deleted"}`
-	assert.Equalf(dcs.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
+	assert.Equalf(ch.T(), expectedBody, rr.Body.String(), "Should have responded with body %s but got %s", expectedBody, rr.Body.String())
 }

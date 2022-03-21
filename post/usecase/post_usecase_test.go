@@ -16,22 +16,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestInsertPost(t *testing.T) {
-	suite.Run(t, new(InsertPostSuite))
-}
-func TestFindPosts(t *testing.T) {
-	suite.Run(t, new(FindPostsSuite))
+func TestPostUsecaseSuite(t *testing.T) {
+	suite.Run(t, new(PostUsecaseSuite))
 }
 
-func TestUpdatePostSuite(t *testing.T) {
-	suite.Run(t, new(UpdatePostSuite))
-}
-
-func TestDeletePostSuite(t *testing.T) {
-	suite.Run(t, new(DeletePostSuite))
-}
-
-type InsertPostSuite struct {
+type PostUsecaseSuite struct {
 	suite.Suite
 	mockPostRepository *mocks.PostRepository
 	mockLikeRepository *mocks.LikeRepository
@@ -39,88 +28,73 @@ type InsertPostSuite struct {
 	mockHeaderHelper   *mocks.IHeaderHelper
 }
 
-func (ips *InsertPostSuite) SetupTest() {
-	ips.mockPostRepository = new(mocks.PostRepository)
-	ips.mockLikeRepository = new(mocks.LikeRepository)
-	ips.mockFileOsHelper = new(mocks.IFileOsHelper)
-	ips.mockHeaderHelper = new(mocks.IHeaderHelper)
+func (pu *PostUsecaseSuite) SetupTest() {
+	pu.mockPostRepository = new(mocks.PostRepository)
+	pu.mockLikeRepository = new(mocks.LikeRepository)
+	pu.mockFileOsHelper = new(mocks.IFileOsHelper)
+	pu.mockHeaderHelper = new(mocks.IHeaderHelper)
 }
 
-func (ips *InsertPostSuite) TestGetUserIdTokenError() {
-	ips.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("", errors.New("GetUserIdFromToken return error"))
+func (pu *PostUsecaseSuite) TestInsertPostGetUserIdTokenError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("", errors.New("GetUserIdFromToken return error"))
 
-	postUsecase := usecase.NewPostUseCase(ips.mockPostRepository, ips.mockLikeRepository, ips.mockHeaderHelper, ips.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	newPost := domain.NewPost("postid1", "userid1", []string{}, "caption1", 0, time.Now(), time.Now())
 	err := postUsecase.InsertPost(newPost, "accessToken", []*multipart.FileHeader{})
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ips.T(), err, expectedError, "Should have return %s but got %s", expectedError, err)
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err)
 }
 
-func (ips *InsertPostSuite) TestMkDirAllError() {
-	ips.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userId1", nil)
-	ips.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(errors.New("MkDirAll return error"))
+func (pu *PostUsecaseSuite) TestInsertPostMkDirAllError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userId1", nil)
+	pu.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(errors.New("MkDirAll return error"))
 
-	postUsecase := usecase.NewPostUseCase(ips.mockPostRepository, ips.mockLikeRepository, ips.mockHeaderHelper, ips.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	newPost := domain.NewPost("postid1", "userid1", []string{}, "caption1", 0, time.Now(), time.Now())
 	err := postUsecase.InsertPost(newPost, "accessToken", []*multipart.FileHeader{})
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ips.T(), err, expectedError, "Should have return %s but got %s", expectedError, err)
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err)
 }
 
-func (ips *InsertPostSuite) TestInsertPostError() {
-	ips.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userId1", nil)
-	ips.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	ips.mockPostRepository.On("InsertPost", mock.Anything).Return(errors.New("InsertPost return error"))
+func (pu *PostUsecaseSuite) TestInsertPostInsertPostError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userId1", nil)
+	pu.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	pu.mockPostRepository.On("InsertPost", mock.AnythingOfType("*domain.Post")).Return(errors.New("InsertPost return error"))
 
-	postUsecase := usecase.NewPostUseCase(ips.mockPostRepository, ips.mockLikeRepository, ips.mockHeaderHelper, ips.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	newPost := domain.NewPost("postid1", "userid1", []string{}, "caption1", 0, time.Now(), time.Now())
 	err := postUsecase.InsertPost(newPost, "accessToken", []*multipart.FileHeader{})
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ips.T(), err, expectedError, "Should have return %s but got %s", expectedError, err)
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err)
 }
 
-func (ips *InsertPostSuite) TestInsertPostSuccessful() {
-	ips.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userId1", nil)
-	ips.mockFileOsHelper.On("MkDirAll", mock.Anything, mock.Anything).Return(nil)
-	ips.mockPostRepository.On("InsertPost", mock.Anything).Return(nil)
+func (pu *PostUsecaseSuite) TestInsertPostSuccessful() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userId1", nil)
+	pu.mockFileOsHelper.On("MkDirAll", mock.AnythingOfType("string"), mock.AnythingOfType("fs.FileMode")).Return(nil)
+	pu.mockPostRepository.On("InsertPost", mock.AnythingOfType("*domain.Post")).Return(nil)
 
-	postUsecase := usecase.NewPostUseCase(ips.mockPostRepository, ips.mockLikeRepository, ips.mockHeaderHelper, ips.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	newPost := domain.NewPost("postid1", "userid1", []string{}, "caption1", 0, time.Now(), time.Now())
 	err := postUsecase.InsertPost(newPost, "accessToken", []*multipart.FileHeader{})
 
-	assert.NoErrorf(ips.T(), err, "should have not returned error but got %s", err)
+	assert.NoErrorf(pu.T(), err, "should have not returned error but got %s", err)
 }
 
-type FindPostsSuite struct {
-	suite.Suite
-	mockPostRepository *mocks.PostRepository
-	mockLikeRepository *mocks.LikeRepository
-	mockFileOsHelper   *mocks.IFileOsHelper
-	mockHeaderHelper   *mocks.IHeaderHelper
-}
+func (pu *PostUsecaseSuite) TestFindPostFindPostsError() {
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(nil, errors.New("FindPosts return error"))
 
-func (fps *FindPostsSuite) SetupTest() {
-	fps.mockPostRepository = new(mocks.PostRepository)
-	fps.mockFileOsHelper = new(mocks.IFileOsHelper)
-	fps.mockHeaderHelper = new(mocks.IHeaderHelper)
-	fps.mockLikeRepository = new(mocks.LikeRepository)
-}
-
-func (fps *FindPostsSuite) TestFindPostsError() {
-	fps.mockPostRepository.On("FindPosts", mock.Anything).Return(nil, errors.New("FindPosts return error"))
-
-	postUsecase := usecase.NewPostUseCase(fps.mockPostRepository, fps.mockLikeRepository, fps.mockHeaderHelper, fps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	_, err := postUsecase.FindPosts()
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(fps.T(), err, expectedError, "should have return error %s but got %s", expectedError, err)
+	assert.EqualErrorf(pu.T(), err, expectedError, "should have return error %s but got %s", expectedError, err)
 }
 
-func (fps *FindPostsSuite) TestFindLikesError() {
-	fps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (pu *PostUsecaseSuite) TestFindPostFindLikesError() {
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "postid1",
 			"user_id":           "userid1",
 			"visual_media_urls": []primitive.A{{"jpg.jpg"}, {"png.png"}},
@@ -128,17 +102,17 @@ func (fps *FindPostsSuite) TestFindLikesError() {
 			"created_date":      primitive.NewDateTimeFromTime(time.Now()),
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fps.mockLikeRepository.On("FindLikes", mock.Anything).Return(nil, errors.New("FindLikes return error"))
+	pu.mockLikeRepository.On("FindLikes", mock.AnythingOfType("M")).Return(nil, errors.New("FindLikes return error"))
 
-	postUsecase := usecase.NewPostUseCase(fps.mockPostRepository, fps.mockLikeRepository, fps.mockHeaderHelper, fps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	_, err := postUsecase.FindPosts()
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(fps.T(), err, expectedError, "should have return error %s but got %s", expectedError, err)
+	assert.EqualErrorf(pu.T(), err, expectedError, "should have return error %s but got %s", expectedError, err)
 }
 
-func (fps *FindPostsSuite) TestFindPostSuccessful() {
-	fps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (pu *PostUsecaseSuite) TestFindPostSuccessful() {
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "postid1",
 			"user_id":           "userid1",
 			"visual_media_urls": []primitive.A{{"jpg.jpg"}, {"png.png"}},
@@ -152,65 +126,50 @@ func (fps *FindPostsSuite) TestFindPostSuccessful() {
 			"created_date":      primitive.NewDateTimeFromTime(time.Now()),
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fps.mockLikeRepository.On("FindLikes", mock.Anything).Return(&[]bson.M{
+	pu.mockLikeRepository.On("FindLikes", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "likeid1", "user_id": "userid1", "resource_id": "postid1", "resource_type": "post"},
 	}, nil)
 
-	postUsecase := usecase.NewPostUseCase(fps.mockPostRepository, fps.mockLikeRepository, fps.mockHeaderHelper, fps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	result, err := postUsecase.FindPosts()
 
-	assert.NoErrorf(fps.T(), err, "Should have not return error but got %s", err)
-	assert.Equal(fps.T(), len(*result), 2, "length of result should be 2")
+	assert.NoErrorf(pu.T(), err, "Should have not return error but got %s", err)
+	assert.Equal(pu.T(), len(*result), 2, "length of result should be 2")
 }
 
-type UpdatePostSuite struct {
-	suite.Suite
-	mockPostRepository *mocks.PostRepository
-	mockLikeRepository *mocks.LikeRepository
-	mockFileOsHelper   *mocks.IFileOsHelper
-	mockHeaderHelper   *mocks.IHeaderHelper
-}
+func (pu *PostUsecaseSuite) TestUpdatePostGetUserIdFromTokenError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("", errors.New("GetUserIdFromTokenError return error"))
 
-func (ups *UpdatePostSuite) SetupTest() {
-	ups.mockPostRepository = new(mocks.PostRepository)
-	ups.mockLikeRepository = new(mocks.LikeRepository)
-	ups.mockFileOsHelper = new(mocks.IFileOsHelper)
-	ups.mockHeaderHelper = new(mocks.IHeaderHelper)
-}
-
-func (ups *UpdatePostSuite) TestGetUserIdFromTokenError() {
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("", errors.New("GetUserIdFromTokenError return error"))
-
-	postUsecase := usecase.NewPostUseCase(ups.mockPostRepository, ups.mockLikeRepository, ups.mockHeaderHelper, ups.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.UpdatePost("postid1", "updated caption 1", "accessToken")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ups.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
 }
 
-func (ups *UpdatePostSuite) TestFindPostsError() {
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	ups.mockPostRepository.On("FindPosts", mock.Anything).Return(nil, errors.New("FindPosts return error"))
+func (pu *PostUsecaseSuite) TestUpdatePostFindPostsError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(nil, errors.New("FindPosts return error"))
 
-	postUsecase := usecase.NewPostUseCase(ups.mockPostRepository, ups.mockLikeRepository, ups.mockHeaderHelper, ups.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.UpdatePost("postid1", "updated caption 1", "accessToken")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ups.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
 }
 
-func (ups *UpdatePostSuite) TestPostNotFound() {
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	ups.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{}, nil)
+func (pu *PostUsecaseSuite) TestUpdatePostPostNotFound() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	postUsecase := usecase.NewPostUseCase(ups.mockPostRepository, ups.mockLikeRepository, ups.mockHeaderHelper, ups.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.UpdatePost("postid1", "updated caption 1", "accessToken")
 
 	expectedError := domain.ErrPostNotFound.Error()
-	assert.EqualErrorf(ups.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
 }
 
-func (ups *UpdatePostSuite) TestFindOnePostError() {
+func (pu *PostUsecaseSuite) TestUpdatePostFindOnePostError() {
 	foundPost := bson.M{
 		"_id":               "postid1",
 		"user_id":           "userid1",
@@ -219,18 +178,18 @@ func (ups *UpdatePostSuite) TestFindOnePostError() {
 		"created_date":      primitive.NewDateTimeFromTime(time.Now()),
 		"updated_date":      primitive.NewDateTimeFromTime(time.Now()),
 	}
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	ups.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{foundPost}, nil)
-	ups.mockPostRepository.On("FindOnePost", mock.Anything).Return(nil, errors.New("FindOnePost return error"))
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{foundPost}, nil)
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(nil, errors.New("FindOnePost return error"))
 
-	postUsecase := usecase.NewPostUseCase(ups.mockPostRepository, ups.mockLikeRepository, ups.mockHeaderHelper, ups.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.UpdatePost("postid1", "updated caption 1", "accessToken")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ups.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
 }
 
-func (ups *UpdatePostSuite) TestUnauthorizedPostUpdate() {
+func (pu *PostUsecaseSuite) TestUpdatePostUnauthorizedPostUpdate() {
 	foundPosts := []bson.M{
 		{
 			"_id":               "postid1",
@@ -242,18 +201,18 @@ func (ups *UpdatePostSuite) TestUnauthorizedPostUpdate() {
 		},
 	}
 	foundPost := domain.NewPost("postid1", "userid1", []string{"jpg.jpg", "png.png"}, "caption1", 0, time.Now(), time.Now())
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid2", nil)
-	ups.mockPostRepository.On("FindPosts", mock.Anything).Return(&foundPosts, nil)
-	ups.mockPostRepository.On("FindOnePost", mock.Anything).Return(foundPost, nil)
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid2", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&foundPosts, nil)
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(foundPost, nil)
 
-	postUsecase := usecase.NewPostUseCase(ups.mockPostRepository, ups.mockLikeRepository, ups.mockHeaderHelper, ups.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.UpdatePost("postid1", "updated caption 1", "accessToken")
 
 	expectedError := domain.ErrUnauthorizedPostUpdate.Error()
-	assert.EqualErrorf(ups.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
 }
 
-func (ups *UpdatePostSuite) TestUpdatePostError() {
+func (pu *PostUsecaseSuite) TestUpdatePostUpdatePostError() {
 	foundPosts := []bson.M{
 		{
 			"_id":               "postid1",
@@ -265,19 +224,19 @@ func (ups *UpdatePostSuite) TestUpdatePostError() {
 		},
 	}
 	foundPost := domain.NewPost("postid1", "userid1", []string{"jpg.jpg", "png.png"}, "caption1", 0, time.Now(), time.Now())
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	ups.mockPostRepository.On("FindPosts", mock.Anything).Return(&foundPosts, nil)
-	ups.mockPostRepository.On("FindOnePost", mock.Anything).Return(foundPost, nil)
-	ups.mockPostRepository.On("UpdatePost", mock.Anything, mock.Anything).Return(errors.New("UpdatePost return error"))
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&foundPosts, nil)
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(foundPost, nil)
+	pu.mockPostRepository.On("UpdatePost", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(errors.New("UpdatePost return error"))
 
-	postUsecase := usecase.NewPostUseCase(ups.mockPostRepository, ups.mockLikeRepository, ups.mockHeaderHelper, ups.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.UpdatePost("postid1", "updated caption 1", "accessToken")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(ups.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have returned %s but got %s", expectedError, err.Error())
 }
 
-func (ups *UpdatePostSuite) TestUpdatePostSuccessful() {
+func (pu *PostUsecaseSuite) TestUpdatePostSuccessful() {
 	foundPosts := []bson.M{
 		{
 			"_id":               "postid1",
@@ -289,63 +248,48 @@ func (ups *UpdatePostSuite) TestUpdatePostSuccessful() {
 		},
 	}
 	foundPost := domain.NewPost("postid1", "userid1", []string{"jpg.jpg", "png.png"}, "caption1", 0, time.Now(), time.Now())
-	ups.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	ups.mockPostRepository.On("FindPosts", mock.Anything).Return(&foundPosts, nil)
-	ups.mockPostRepository.On("FindOnePost", mock.Anything).Return(foundPost, nil)
-	ups.mockPostRepository.On("UpdatePost", mock.Anything, mock.Anything).Return(nil)
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&foundPosts, nil)
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(foundPost, nil)
+	pu.mockPostRepository.On("UpdatePost", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
 
 }
 
-type DeletePostSuite struct {
-	suite.Suite
-	mockPostRepository *mocks.PostRepository
-	mockLikeRepository *mocks.LikeRepository
-	mockFileOsHelper   *mocks.IFileOsHelper
-	mockHeaderHelper   *mocks.IHeaderHelper
-}
+func (pu *PostUsecaseSuite) TestDeletePostGetUserIdFromTokenError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("", errors.New("GetUserIdFromToken return error"))
 
-func (dps *DeletePostSuite) SetupTest() {
-	dps.mockPostRepository = new(mocks.PostRepository)
-	dps.mockLikeRepository = new(mocks.LikeRepository)
-	dps.mockFileOsHelper = new(mocks.IFileOsHelper)
-	dps.mockHeaderHelper = new(mocks.IHeaderHelper)
-}
-
-func (dps *DeletePostSuite) TestGetUserIdFromTokenError() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("", errors.New("GetUserIdFromToken return error"))
-
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dps.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (dps *DeletePostSuite) TestFindPostsError() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dps.mockPostRepository.On("FindPosts", mock.Anything).Return(nil, errors.New("FindPosts return error"))
+func (pu *PostUsecaseSuite) TestDeletePostFindPostsError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(nil, errors.New("FindPosts return error"))
 
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dps.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (dps *DeletePostSuite) TestPostNotFound() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{}, nil)
+func (pu *PostUsecaseSuite) TestDeletePostPostNotFound() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
 	expectedError := domain.ErrPostNotFound.Error()
-	assert.EqualErrorf(dps.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (dps *DeletePostSuite) TestFindOnePostError() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (pu *PostUsecaseSuite) TestDeletePostFindOnePostError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":               "postid1",
 			"user_id":           "userid1",
@@ -355,18 +299,18 @@ func (dps *DeletePostSuite) TestFindOnePostError() {
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now()),
 		},
 	}, nil)
-	dps.mockPostRepository.On("FindOnePost", mock.Anything).Return(nil, errors.New("FindOnePost return error"))
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(nil, errors.New("FindOnePost return error"))
 
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dps.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (dps *DeletePostSuite) TestUnauthorizedPostDelete() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (pu *PostUsecaseSuite) TestDeletePostUnauthorizedPostDelete() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":               "postid1",
 			"user_id":           "userid2",
@@ -376,19 +320,19 @@ func (dps *DeletePostSuite) TestUnauthorizedPostDelete() {
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now()),
 		},
 	}, nil)
-	dps.mockPostRepository.On("FindOnePost", mock.Anything).Return(domain.NewPost(
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(domain.NewPost(
 		"postid1", "userid2", []string{"jpg.jpg", "png.png"}, "a new caption1", 0, time.Now(), time.Now()), nil)
 
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
 	expectedError := domain.ErrUnauthorizedPostDelete.Error()
-	assert.EqualErrorf(dps.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (dps *DeletePostSuite) TestDeletePostError() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (pu *PostUsecaseSuite) TestDeletePostDeletePostError() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":               "postid1",
 			"user_id":           "userid1",
@@ -398,20 +342,20 @@ func (dps *DeletePostSuite) TestDeletePostError() {
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now()),
 		},
 	}, nil)
-	dps.mockPostRepository.On("FindOnePost", mock.Anything).Return(domain.NewPost(
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(domain.NewPost(
 		"postid1", "userid1", []string{"jpg.jpg", "png.png"}, "a new caption1", 0, time.Now(), time.Now()), nil)
-	dps.mockPostRepository.On("DeletePost", mock.Anything).Return(errors.New("DeletePost return error"))
+	pu.mockPostRepository.On("DeletePost", mock.AnythingOfType("string")).Return(errors.New("DeletePost return error"))
 
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dps.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(pu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (dps *DeletePostSuite) TestDeletePostSuccessful() {
-	dps.mockHeaderHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dps.mockPostRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (pu *PostUsecaseSuite) TestDeletePostSuccessful() {
+	pu.mockHeaderHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	pu.mockPostRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{
 			"_id":               "postid1",
 			"user_id":           "userid1",
@@ -421,12 +365,12 @@ func (dps *DeletePostSuite) TestDeletePostSuccessful() {
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now()),
 		},
 	}, nil)
-	dps.mockPostRepository.On("FindOnePost", mock.Anything).Return(domain.NewPost(
+	pu.mockPostRepository.On("FindOnePost", mock.AnythingOfType("string")).Return(domain.NewPost(
 		"postid1", "userid1", []string{"jpg.jpg", "png.png"}, "a new caption1", 0, time.Now(), time.Now()), nil)
-	dps.mockPostRepository.On("DeletePost", mock.Anything).Return(nil)
+	pu.mockPostRepository.On("DeletePost", mock.AnythingOfType("string")).Return(nil)
 
-	postUsecase := usecase.NewPostUseCase(dps.mockPostRepository, dps.mockLikeRepository, dps.mockHeaderHelper, dps.mockFileOsHelper)
+	postUsecase := usecase.NewPostUseCase(pu.mockPostRepository, pu.mockLikeRepository, pu.mockHeaderHelper, pu.mockFileOsHelper)
 	err := postUsecase.DeletePost("postid1", "token1")
 
-	assert.NoErrorf(dps.T(), err, "should have not return error but got %s", err)
+	assert.NoErrorf(pu.T(), err, "should have not return error but got %s", err)
 }

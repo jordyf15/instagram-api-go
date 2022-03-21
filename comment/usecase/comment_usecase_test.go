@@ -15,23 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func TestFindCommentSuite(t *testing.T) {
-	suite.Run(t, new(FindCommentSuite))
+func TestCommentUsecaseSuite(t *testing.T) {
+	suite.Run(t, new(CommentUsecaseSuite))
 }
 
-func TestPostCommentSuite(t *testing.T) {
-	suite.Run(t, new(PostCommentSuite))
-}
-
-func TestPutCommentSuite(t *testing.T) {
-	suite.Run(t, new(PutCommentSuite))
-}
-
-func TestDeleteCommentSuite(t *testing.T) {
-	suite.Run(t, new(DeleteCommentSuite))
-}
-
-type FindCommentSuite struct {
+type CommentUsecaseSuite struct {
 	suite.Suite
 	commentRepository *mocks.CommentRepository
 	postRepository    *mocks.PostRepository
@@ -39,35 +27,35 @@ type FindCommentSuite struct {
 	headerHelper      *mocks.IHeaderHelper
 }
 
-func (fcs *FindCommentSuite) SetupTest() {
-	fcs.commentRepository = new(mocks.CommentRepository)
-	fcs.postRepository = new(mocks.PostRepository)
-	fcs.likeRepository = new(mocks.LikeRepository)
-	fcs.headerHelper = new(mocks.IHeaderHelper)
+func (cu *CommentUsecaseSuite) SetupTest() {
+	cu.commentRepository = new(mocks.CommentRepository)
+	cu.postRepository = new(mocks.PostRepository)
+	cu.likeRepository = new(mocks.LikeRepository)
+	cu.headerHelper = new(mocks.IHeaderHelper)
 }
 
-func (fcs *FindCommentSuite) TestFindPostError() {
-	fcs.postRepository.On("FindPosts", mock.Anything).Return(nil, errors.New("FindPosts return error"))
+func (cu *CommentUsecaseSuite) TestFindCommentFindPostError() {
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(nil, errors.New("FindPosts return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(fcs.commentRepository, fcs.postRepository, fcs.likeRepository, fcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	_, err := commentUsecase.FindComments("postid1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(fcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (fcs *FindCommentSuite) TestPostNotFound() {
-	fcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{}, nil)
+func (cu *CommentUsecaseSuite) TestFindCommentPostNotFound() {
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	commentUsecase := usecase.NewCommentUsecase(fcs.commentRepository, fcs.postRepository, fcs.likeRepository, fcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	_, err := commentUsecase.FindComments("postid1")
 
 	expectedError := domain.ErrPostNotFound.Error()
-	assert.EqualErrorf(fcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (fcs *FindCommentSuite) TestFindCommentError() {
-	fcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestFindCommentFindCommentsError() {
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "postid1",
 			"user_id":           "userid1",
 			"visual_media_urls": []primitive.A{{"jpg.jpg"}, {"png.png"}},
@@ -75,110 +63,95 @@ func (fcs *FindCommentSuite) TestFindCommentError() {
 			"created_date":      primitive.NewDateTimeFromTime(time.Now()),
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fcs.commentRepository.On("FindComments", mock.Anything).Return(nil, errors.New("FindComments return error"))
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(nil, errors.New("FindComments return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(fcs.commentRepository, fcs.postRepository, fcs.likeRepository, fcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	_, err := commentUsecase.FindComments("postid1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(fcs.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return %s but got %s", expectedError, err.Error())
 }
 
-func (fcs *FindCommentSuite) TestFindLikesError() {
-	fcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestFindCommentFindLikesError() {
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 		{"_id": "commentid2", "post_id": "postid1", "user_id": "userid1", "comment": "comment2",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fcs.likeRepository.On("FindLikes", mock.Anything).Return(nil, errors.New("FindLikes return error"))
+	cu.likeRepository.On("FindLikes", mock.AnythingOfType("M")).Return(nil, errors.New("FindLikes return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(fcs.commentRepository, fcs.postRepository, fcs.likeRepository, fcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	_, err := commentUsecase.FindComments("postid1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(fcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (fcs *FindCommentSuite) TestFindCommentSuccessful() {
-	fcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestFindCommentSuccessful() {
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 		{"_id": "commentid2", "post_id": "postid1", "user_id": "userid1", "comment": "comment2",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	fcs.likeRepository.On("FindLikes", mock.Anything).Return(&[]bson.M{}, nil)
+	cu.likeRepository.On("FindLikes", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	commentUsecase := usecase.NewCommentUsecase(fcs.commentRepository, fcs.postRepository, fcs.likeRepository, fcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	comments, err := commentUsecase.FindComments("postid1")
 
-	assert.NoErrorf(fcs.T(), err, "Should not have return error but got %s", err)
-	assert.Equal(fcs.T(), 2, len(*comments), "Should have return 2 comments")
-	assert.Equal(fcs.T(), "commentid1", (*comments)[0].Id, "The first id should be correct")
-	assert.Equal(fcs.T(), "commentid2", (*comments)[1].Id, "The first id should be correct")
+	assert.NoErrorf(cu.T(), err, "Should not have return error but got %s", err)
+	assert.Equal(cu.T(), 2, len(*comments), "Should have return 2 comments")
+	assert.Equal(cu.T(), "commentid1", (*comments)[0].Id, "The first id should be correct")
+	assert.Equal(cu.T(), "commentid2", (*comments)[1].Id, "The first id should be correct")
 }
 
-type PostCommentSuite struct {
-	suite.Suite
-	commentRepository *mocks.CommentRepository
-	postRepository    *mocks.PostRepository
-	likeRepository    *mocks.LikeRepository
-	headerHelper      *mocks.IHeaderHelper
-}
-
-func (pcs *PostCommentSuite) SetupTest() {
-	pcs.commentRepository = new(mocks.CommentRepository)
-	pcs.postRepository = new(mocks.PostRepository)
-	pcs.likeRepository = new(mocks.LikeRepository)
-	pcs.headerHelper = new(mocks.IHeaderHelper)
-}
-
-func (pcs *PostCommentSuite) TestGetUserIdFromTokenError() {
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("", errors.New("GetUserIdFromToken return error"))
+func (cu *CommentUsecaseSuite) TestPostCommentGetUserIdFromTokenError() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("", errors.New("GetUserIdFromToken return error"))
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PostComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PostCommentSuite) TestFindPostsError() {
+func (cu *CommentUsecaseSuite) TestPostCommentFindPostsError() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.postRepository.On("FindPosts", mock.Anything).Return(nil, errors.New("FindPosts return error"))
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(nil, errors.New("FindPosts return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PostComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
-func (pcs *PostCommentSuite) TestPostNotFound() {
+func (cu *CommentUsecaseSuite) TestPostCommentPostNotFound() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{}, nil)
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PostComment(comment, "token1")
 
 	expectedError := domain.ErrPostNotFound.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PostCommentSuite) TestInsertCommentError() {
+func (cu *CommentUsecaseSuite) TestPostCommentInsertCommentError() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "postid1",
 			"user_id":           "userid1",
 			"visual_media_urls": []primitive.A{{"jpg.jpg"}, {"png.png"}},
@@ -186,19 +159,19 @@ func (pcs *PostCommentSuite) TestInsertCommentError() {
 			"created_date":      primitive.NewDateTimeFromTime(time.Now()),
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	pcs.commentRepository.On("InsertComment", mock.Anything).Return(errors.New("InsertComment return error"))
+	cu.commentRepository.On("InsertComment", mock.AnythingOfType("*domain.Comment")).Return(errors.New("InsertComment return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PostComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PostCommentSuite) TestInsertCommentSuccessful() {
+func (cu *CommentUsecaseSuite) TestPostCommentInsertCommentSuccessful() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.postRepository.On("FindPosts", mock.Anything).Return(&[]bson.M{
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.postRepository.On("FindPosts", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "postid1",
 			"user_id":           "userid1",
 			"visual_media_urls": []primitive.A{{"jpg.jpg"}, {"png.png"}},
@@ -206,244 +179,214 @@ func (pcs *PostCommentSuite) TestInsertCommentSuccessful() {
 			"created_date":      primitive.NewDateTimeFromTime(time.Now()),
 			"updated_date":      primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	pcs.commentRepository.On("InsertComment", mock.Anything).Return(nil)
+	cu.commentRepository.On("InsertComment", mock.AnythingOfType("*domain.Comment")).Return(nil)
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PostComment(comment, "token1")
 
-	assert.NoErrorf(pcs.T(), err, "Should have not return error but got %s", err)
+	assert.NoErrorf(cu.T(), err, "Should have not return error but got %s", err)
 }
 
-type PutCommentSuite struct {
-	suite.Suite
-	commentRepository *mocks.CommentRepository
-	postRepository    *mocks.PostRepository
-	likeRepository    *mocks.LikeRepository
-	headerHelper      *mocks.IHeaderHelper
-}
-
-func (pcs *PutCommentSuite) SetupTest() {
-	pcs.commentRepository = new(mocks.CommentRepository)
-	pcs.postRepository = new(mocks.PostRepository)
-	pcs.likeRepository = new(mocks.LikeRepository)
-	pcs.headerHelper = new(mocks.IHeaderHelper)
-}
-
-func (pcs *PutCommentSuite) TestGetUserIdFromTokenError() {
+func (cu *CommentUsecaseSuite) TestPutCommentGetUserIdFromTokenError() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("", errors.New("GetUserIdFromToken return error"))
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("", errors.New("GetUserIdFromToken return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PutCommentSuite) TestFindCommentError() {
+func (cu *CommentUsecaseSuite) TestPutCommentFindCommentError() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.commentRepository.On("FindComments", mock.Anything).Return(nil, errors.New("FindComments return error"))
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(nil, errors.New("FindComments return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PutCommentSuite) TestCommentNotFound() {
+func (cu *CommentUsecaseSuite) TestPutCommentCommentNotFound() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{}, nil)
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
 	expectedError := domain.ErrCommentNotFound.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
-func (pcs *PutCommentSuite) TestFindOneCommentError() {
+func (cu *CommentUsecaseSuite) TestPutCommentFindOneCommentError() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	pcs.commentRepository.On("FindOneComment", mock.Anything).Return(nil, errors.New("FindOneComment return error"))
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(nil, errors.New("FindOneComment return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PutCommentSuite) TestUnauthorizedCommentUpdate() {
+func (cu *CommentUsecaseSuite) TestPutCommentUnauthorizedCommentUpdate() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	pcs.commentRepository.On("FindOneComment", mock.Anything).Return(domain.NewComment(
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(domain.NewComment(
 		"commentid1", "postid1", "userid2", "comment1", 0, time.Now(), time.Now(),
 	), nil)
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
 	expectedError := domain.ErrUnauthorizedCommentUpdate.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PutCommentSuite) TestUpdateCommentError() {
+func (cu *CommentUsecaseSuite) TestPutCommentUpdateCommentError() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	pcs.commentRepository.On("FindOneComment", mock.Anything).Return(domain.NewComment(
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(domain.NewComment(
 		"commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now(),
 	), nil)
-	pcs.commentRepository.On("UpdateComment", mock.Anything, mock.Anything).Return(errors.New("UpdateComment return error"))
+	cu.commentRepository.On("UpdateComment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(errors.New("UpdateComment return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(pcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (pcs *PutCommentSuite) TestUpdateCommentSuccessful() {
+func (cu *CommentUsecaseSuite) TestPutCommentUpdateCommentSuccessful() {
 	comment := domain.NewComment("commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now())
-	pcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	pcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	pcs.commentRepository.On("FindOneComment", mock.Anything).Return(domain.NewComment(
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(domain.NewComment(
 		"commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now(),
 	), nil)
-	pcs.commentRepository.On("UpdateComment", mock.Anything, mock.Anything).Return(nil)
+	cu.commentRepository.On("UpdateComment", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(nil)
 
-	commentUsecase := usecase.NewCommentUsecase(pcs.commentRepository, pcs.postRepository, pcs.likeRepository, pcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.PutComment(comment, "token1")
 
-	assert.NoErrorf(pcs.T(), err, "Should have not return error but got %s", err)
+	assert.NoErrorf(cu.T(), err, "Should have not return error but got %s", err)
 }
 
-type DeleteCommentSuite struct {
-	suite.Suite
-	commentRepository *mocks.CommentRepository
-	postRepository    *mocks.PostRepository
-	likeRepository    *mocks.LikeRepository
-	headerHelper      *mocks.IHeaderHelper
-}
+func (cu *CommentUsecaseSuite) TestDeleteCommentGetUserIdFromTokenError() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("", errors.New("GetUserIdFromToken return error"))
 
-func (dcs *DeleteCommentSuite) SetupTest() {
-	dcs.commentRepository = new(mocks.CommentRepository)
-	dcs.postRepository = new(mocks.PostRepository)
-	dcs.likeRepository = new(mocks.LikeRepository)
-	dcs.headerHelper = new(mocks.IHeaderHelper)
-}
-
-func (dcs *DeleteCommentSuite) TestGetUserIdFromTokenError() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("", errors.New("GetUserIdFromToken return error"))
-
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (dcs *DeleteCommentSuite) TestFindCommentsError() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dcs.commentRepository.On("FindComments", mock.Anything).Return(nil, errors.New("FindComments return error"))
+func (cu *CommentUsecaseSuite) TestDeleteCommentFindCommentsError() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(nil, errors.New("FindComments return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (dcs *DeleteCommentSuite) TestCommentNotFound() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{}, nil)
+func (cu *CommentUsecaseSuite) TestDeleteCommentCommentNotFound() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{}, nil)
 
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
 	expectedError := domain.ErrCommentNotFound.Error()
-	assert.EqualErrorf(dcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (dcs *DeleteCommentSuite) TestFindOneCommentError() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestDeleteCommentFindOneCommentError() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	dcs.commentRepository.On("FindOneComment", mock.Anything).Return(nil, errors.New("FindOneComment return error"))
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(nil, errors.New("FindOneComment return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (dcs *DeleteCommentSuite) TestUnauthorizedCommentDelete() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestDeleteCommentUnauthorizedCommentDelete() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid2", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	dcs.commentRepository.On("FindOneComment", mock.Anything).Return(domain.NewComment(
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(domain.NewComment(
 		"commentid1", "postid1", "userid2", "comment1", 0, time.Now(), time.Now(),
 	), nil)
 
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
 	expectedError := domain.ErrUnauthorizedCommentDelete.Error()
-	assert.EqualErrorf(dcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (dcs *DeleteCommentSuite) TestDeleteCommentError() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestDeleteCommentDeleteCommentError() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	dcs.commentRepository.On("FindOneComment", mock.Anything).Return(domain.NewComment(
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(domain.NewComment(
 		"commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now(),
 	), nil)
-	dcs.commentRepository.On("DeleteComment", mock.Anything).Return(errors.New("DeleteComment return error"))
+	cu.commentRepository.On("DeleteComment", mock.AnythingOfType("string")).Return(errors.New("DeleteComment return error"))
 
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
 	expectedError := domain.ErrInternalServerError.Error()
-	assert.EqualErrorf(dcs.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
+	assert.EqualErrorf(cu.T(), err, expectedError, "Should have return error %s but got %s", expectedError, err.Error())
 }
 
-func (dcs *DeleteCommentSuite) TestDeleteCommentSuccessful() {
-	dcs.headerHelper.On("GetUserIdFromToken", mock.Anything).Return("userid1", nil)
-	dcs.commentRepository.On("FindComments", mock.Anything).Return(&[]bson.M{
+func (cu *CommentUsecaseSuite) TestDeleteCommentSuccessful() {
+	cu.headerHelper.On("GetUserIdFromToken", mock.AnythingOfType("string")).Return("userid1", nil)
+	cu.commentRepository.On("FindComments", mock.AnythingOfType("M")).Return(&[]bson.M{
 		{"_id": "commentid1", "post_id": "postid1", "user_id": "userid1", "comment": "comment1",
 			"created_date": primitive.NewDateTimeFromTime(time.Now()), "updated_date": primitive.NewDateTimeFromTime(time.Now())},
 	}, nil)
-	dcs.commentRepository.On("FindOneComment", mock.Anything).Return(domain.NewComment(
+	cu.commentRepository.On("FindOneComment", mock.AnythingOfType("string")).Return(domain.NewComment(
 		"commentid1", "postid1", "userid1", "comment1", 0, time.Now(), time.Now(),
 	), nil)
-	dcs.commentRepository.On("DeleteComment", mock.Anything).Return(nil)
+	cu.commentRepository.On("DeleteComment", mock.AnythingOfType("string")).Return(nil)
 
-	commentUsecase := usecase.NewCommentUsecase(dcs.commentRepository, dcs.postRepository, dcs.likeRepository, dcs.headerHelper)
+	commentUsecase := usecase.NewCommentUsecase(cu.commentRepository, cu.postRepository, cu.likeRepository, cu.headerHelper)
 	err := commentUsecase.DeleteComment("commentid1", "token1")
 
-	assert.NoErrorf(dcs.T(), err, "Should have not return error but got %s", err)
+	assert.NoErrorf(cu.T(), err, "Should have not return error but got %s", err)
 }
